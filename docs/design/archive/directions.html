@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>جهت‌های طراحی OKR</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Vazirmatn,"Segoe UI",Tahoma,sans-serif;background:#e9ecef;color:#1b2430;font-size:14px}
+.pick{position:sticky;top:0;z-index:10;display:flex;gap:8px;padding:12px 16px;background:#111827;align-items:center;flex-wrap:wrap}
+.pick b{color:#fff;margin-inline-end:8px}
+.pick button{font:inherit;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;background:#374151;color:#fff}
+.pick button.on{background:#fff;color:#111827;font-weight:700}
+.note{max-width:1100px;margin:14px auto 0;padding:0 16px;color:#374151;line-height:1.9}
+.stage{max-width:1100px;margin:14px auto 40px;padding:0 16px}
+.app{display:none;border-radius:14px;overflow:hidden;min-height:560px;box-shadow:0 8px 30px rgba(0,0,0,.15);background:var(--bg);color:var(--tx);grid-template-columns:210px 1fr}
+.app.show{display:grid}
+.side{background:var(--side);color:var(--sidetx);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.logo{font-weight:800;font-size:17px;padding:4px 10px 14px;color:var(--logo)}
+.nav{padding:9px 12px;border-radius:var(--r);color:inherit;opacity:.85}
+.nav.act{background:var(--navact);opacity:1;font-weight:700;color:var(--navacttx)}
+.main{padding:var(--pad);min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+h1{font-size:19px}
+.sub{color:var(--mut);font-size:12.5px;margin-top:3px}
+.btn{border:0;font:inherit;background:var(--ac);color:var(--actx);padding:8px 16px;border-radius:var(--r);cursor:pointer;font-weight:700}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:var(--r2);padding:var(--cpad)}
+.stat small{color:var(--mut)}
+.stat div{font-size:22px;font-weight:800;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:right;font-weight:600;color:var(--mut);font-size:12px;padding:var(--tp);background:var(--th);border-bottom:1px solid var(--bd)}
+td{padding:var(--tp);border-bottom:1px solid var(--bd);vertical-align:middle}
+tr:last-child td{border:0}
+.grp td{background:var(--th);font-weight:700;color:var(--tx)}
+.in{width:92px;font:inherit;text-align:center;padding:5px 6px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx)}
+.in.edit{border-color:var(--ac);box-shadow:0 0 0 3px var(--ring)}
+.bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--ac)}
+.pc{display:flex;gap:8px;align-items:center}.pc span{min-width:34px;font-weight:700}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.ok{background:var(--okbg);color:var(--ok)}.risk{background:var(--rkbg);color:var(--rk)}.bad{background:var(--bdbg);color:var(--bdc)}.none{background:var(--track);color:var(--mut)}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--th);color:var(--mut);font-size:12.5px;border-top:1px solid var(--bd)}
+/* A: روشن و آرام */
+.A{--bg:#f6f8f7;--tx:#1f2d2b;--mut:#6b7c79;--side:#fff;--sidetx:#3b4a47;--logo:#0f766e;--navact:#e2f3f0;--navacttx:#0f766e;--card:#fff;--bd:#e3e9e7;--th:#f3f6f5;--ac:#0f766e;--actx:#fff;--ring:#0f766e22;--track:#e6ecea;--ok:#0b6b3a;--okbg:#dff3e6;--rk:#8a5a00;--rkbg:#fdf0cf;--bdc:#a12626;--bdbg:#fbe0e0;--r:10px;--r2:14px;--pad:26px;--gap:14px;--cpad:16px;--tp:14px 14px}
+.A .side{border-inline-start:1px solid var(--bd)}
+/* B: فشرده شبیه اکسل */
+.B{--bg:#f2f3f5;--tx:#1c1f24;--mut:#667085;--side:#1f2933;--sidetx:#cbd2d9;--logo:#fff;--navact:#364250;--navacttx:#fff;--card:#fff;--bd:#d5d9df;--th:#eceff3;--ac:#2563eb;--actx:#fff;--ring:#2563eb26;--track:#dfe3e8;--ok:#116b34;--okbg:#d6f0de;--rk:#7a5200;--rkbg:#fbe9b8;--bdc:#a01c1c;--bdbg:#f8d7d7;--r:4px;--r2:4px;--pad:14px;--gap:8px;--cpad:9px 12px;--tp:6px 10px;font-size:13px}
+.B .side{padding:12px 8px}.B .nav{padding:6px 10px}
+.B .stat div{font-size:17px}.B td,.B th{border-inline-end:1px solid var(--bd)}
+.B td:last-child,.B th:last-child{border-inline-end:0}
+.B .bar{height:6px;border-radius:2px}.B .bar i{border-radius:2px}.B .chip{border-radius:3px;padding:1px 8px}
+/* C: تیره حرفه‌ای */
+.C{--bg:#0e1116;--tx:#e6e9ef;--mut:#8b94a5;--side:#0a0c10;--sidetx:#a7b0c0;--logo:#a5b4fc;--navact:#1c2233;--navacttx:#c7d2fe;--card:#151a23;--bd:#232a37;--th:#10141b;--ac:#818cf8;--actx:#0e1116;--ring:#818cf833;--track:#232a37;--ok:#6ee7a0;--okbg:#12301f;--rk:#fcd34d;--rkbg:#33290d;--bdc:#fca5a5;--bdbg:#3a1616;--r:8px;--r2:12px;--pad:22px;--gap:12px;--cpad:14px;--tp:11px 14px}
+.C .stat div{color:#c7d2fe}
+@media(max-width:760px){.app{grid-template-columns:1fr}.side{flex-direction:row;overflow:auto}.stats{grid-template-columns:1fr 1fr}.card{overflow:auto}}
+</style>
+</head>
+<body>
+<div class="pick"><b>جهت طراحی:</b>
+<button data-t="A" class="on">الف — روشن و آرام</button>
+<button data-t="B" >ب — فشرده، شبیه اکسل</button>
+<button data-t="C">پ — تیره و حرفه‌ای</button></div>
+<p class="note" id="note"></p>
+<div class="stage" id="stage"></div>
+<script>
+const notes={
+A:"<b>الف — روشن و آرام:</b> فضای باز، گوشه‌های گرد، رنگ سبز-آبی. دوستانه و کم‌استرس؛ مناسب کاربران غیرفنی. جدول کمی بلندتر است (در یک صفحه ردیف کمتر).",
+B:"<b>ب — فشرده، شبیه اکسل:</b> ردیف‌های کوتاه، خط‌های جدول، رنگ آبی ساده. کسی که امروز با اکسل کار می‌کند فوراً راحت است و ردیف بیشتری در یک نگاه می‌بیند؛ ظاهر رسمی‌تر و کمتر «مدرن».",
+C:"<b>پ — تیره و حرفه‌ای:</b> زمینه تیره با رنگ بنفش-آبی. ظاهر امروزی (شبیه Linear). برای مدیران ارشد چشمگیر است، اما استفاده طولانی ساعت‌ها در محیط اداری و چاپ/PDF با آن سخت‌تر است."};
+const rows=[["واحد فروش داخلی",null],
+["رشد فروش محصولات چرمی",[["۱.۱","افزایش فروش ماهانه (میلیارد تومان)","۱۲۰","۹۴",78,"ok"],["۱.۲","کاهش زمان تحویل سفارش (روز)","۱۰","۱۳",55,"risk"],["۱.۳","راه‌اندازی ۳ نمایندگی جدید","۳","—",0,"none"]]],
+["واحد تولید",null],
+["ارتقای کیفیت خط تولید",[["۲.۱","کاهش ضایعات (درصد)","۴","۶٫۸",32,"bad"],["۲.۲","اتمام مایلستون خط ۲ (درصد)","۱۰۰","۸۰",80,"ok"]]]];
+function build(t){
+let h=`<div class="app ${t}" data-t="${t}"><aside class="side"><div class="logo">OKR</div>
+<div class="nav">داشبورد</div><div class="nav">KRهای من</div><div class="nav act">ثبت دور مرور</div><div class="nav">اهداف</div><div class="nav">همترازی</div><div class="nav">تعهدات</div><div class="nav">گزارش‌ها</div></aside>
+<main class="main"><div class="top"><div><h1>ثبت دور ۲ — واحد فروش و تولید</h1><div class="sub">چرخه ۱۴۰۵ · مهلت ثبت: ۲۵ آبان · ۱ از ۵ مورد ثبت‌نشده</div></div>
+<div style="display:flex;gap:8px"><button class="btn ghost">خروجی Excel</button><button class="btn">ارسال برای تأیید</button></div></div>
+<div class="stats"><div class="stat"><small>پیشرفت واحد</small><div>۵۵٪</div></div><div class="stat"><small>روی مسیر</small><div>۲</div></div><div class="stat"><small>در خطر / عقب</small><div>۲</div></div><div class="stat"><small>ثبت‌نشده</small><div>۱</div></div></div>
+<div class="card"><table><thead><tr><th>#</th><th>نتیجه کلیدی</th><th>هدف</th><th>مقدار این دور</th><th>پیشرفت</th><th>وضعیت</th></tr></thead><tbody>`;
+let first=true;
+for(const r of rows){ if(!r[1]){h+=`<tr class="grp"><td colspan="6">${r[0]}</td></tr>`;continue}
+ h+=`<tr class="grp" style="font-weight:600"><td colspan="6" style="opacity:.8">◂ ${r[0]}</td></tr>`;
+ for(const k of r[1]){const lab={ok:"روی مسیر",risk:"در خطر",bad:"عقب",none:"ثبت نشده"}[k[5]];
+ const ed=first&&k[5]==="risk"; if(ed)first=false;
+ h+=`<tr><td>${k[0]}</td><td>${k[1]}</td><td>${k[2]}</td><td><input class="in ${ed?"edit":""}" value="${k[3]==="—"?"":k[3]}" placeholder="—"></td><td><div class="pc"><span>${k[4].toLocaleString("fa")}٪</span><div class="bar"><i style="width:${k[4]}%"></i></div></div></td><td><span class="chip ${k[5]}">${lab}</span></td></tr>`}}
+h+=`</tbody></table><div class="foot"><span>پیش‌نویس به‌صورت خودکار ذخیره شد · ۱۴:۲۲</span><span>۵ ردیف</span></div></div></main></div>`;return h}
+const stage=document.getElementById("stage");
+stage.innerHTML=["A","B","C"].map(build).join("");
+function show(t){document.querySelectorAll(".app").forEach(a=>a.classList.toggle("show",a.dataset.t===t));
+document.querySelectorAll(".pick button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+document.getElementById("note").innerHTML=notes[t]}
+document.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>show(b.dataset.t));
+show("A");
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+# The whole OKR app: database + API + web.
+#   docker compose -f backend/docker-compose.yml up -d --build      → http://localhost:8088
+#   docker compose -f backend/docker-compose.yml up -d db           → database only (local development)
+# Settings come from backend/.env when present (see .env.example); the defaults below are for development only.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: okr
+      POSTGRES_PASSWORD: ${OKR_DB_PASSWORD:-okr_dev_password}
+      POSTGRES_DB: okr
+    ports:
+      - "${OKR_DB_PORT:-5433}:5432"
+    volumes:
+      - okr_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U okr -d okr"]
+      interval: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      OKR_DATABASE_URL: postgresql+psycopg://okr:${OKR_DB_PASSWORD:-okr_dev_password}@db:5432/${OKR_DB_NAME:-okr}
+      OKR_SECRET_KEY: ${OKR_SECRET_KEY:-dev-only-secret-change-me-0123456789abcdef}
+      OKR_CORS_ORIGINS: '[]'
+      OKR_TIMEZONE: ${OKR_TIMEZONE:-Asia/Tehran}
+
+  web:
+    build:
+      context: ../frontend
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${OKR_WEB_PORT:-8088}:80"
+
+volumes:
+  okr_pg:

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OKR — سه جهت مینیمال و رسمی</title>
+<style>
+@font-face{font-family:Vazirmatn;font-weight:400;src:url(fonts/Vazirmatn-Regular.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:500;src:url(fonts/Vazirmatn-Medium.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:600;src:url(fonts/Vazirmatn-SemiBold.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:700;src:url(fonts/Vazirmatn-Bold.woff2) format("woff2");font-display:swap}
+*{box-sizing:border-box;margin:0}
+body{font:400 14px/1.8 Vazirmatn,Tahoma,sans-serif;background:#e9e9ee;color:#1a1a1a;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+.i{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-variant-numeric:tabular-nums}
+
+/* picker */
+.picker{position:sticky;top:0;z-index:30;background:#111;display:flex;gap:10px 18px;flex-wrap:wrap;align-items:center;padding:12px 18px}
+.picker b{color:#fff}
+.seg{display:flex;gap:4px;background:#222;padding:4px;border-radius:10px}
+.seg button{border:0;background:none;color:#aaa;padding:6px 14px;border-radius:7px;font-weight:500}
+.seg button.on{background:#fff;color:#111;font-weight:700}
+.brief{max-width:1260px;margin:16px auto 0;padding:0 18px;color:#444;line-height:2}
+.stage{max-width:1260px;margin:14px auto 60px;padding:0 18px}
+
+/* app */
+.app{display:none;background:var(--bg);color:var(--tx);border-radius:var(--rl);overflow:hidden;min-height:780px;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(0,0,0,.04),0 24px 48px -24px rgba(0,0,0,.18)}
+.app.show{display:flex}
+.side{width:224px;flex:none;background:var(--sbg);color:var(--stx);border-inline-end:1px solid var(--sbd);padding:20px 14px;display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;padding:4px 10px 20px;color:var(--btx)}
+.brand i{width:26px;height:26px;border-radius:var(--rm);background:var(--ac);display:grid;place-items:center;color:#fff;font-style:normal;font-size:12px;font-weight:700}
+.nv{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:var(--rm);color:var(--stx);transition:background .18s,color .18s;font-weight:500}
+.nv:hover{background:var(--shov)}
+.nv.act{background:var(--sact);color:var(--satx)}
+.sep{font-size:11px;color:var(--smut);padding:16px 12px 6px;letter-spacing:.3px}
+.user{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid var(--sbd)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-weight:600;font-size:12px;flex:none}
+.main{flex:1;min-width:0;padding:26px 32px 36px}
+.screen{display:none}.screen.show{display:block;animation:fade .5s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:24px}
+.crumb{color:var(--mut);font-size:12.5px}
+h1{font-size:23px;font-weight:700;line-height:1.5;letter-spacing:-.2px}
+h2{font-size:14px;font-weight:600}
+.mut{color:var(--mut)}.tiny{font-size:12px}
+.btn{border:1px solid transparent;background:var(--ac);color:#fff;padding:8px 16px;border-radius:var(--rm);font-weight:600;display:inline-flex;gap:8px;align-items:center;transition:filter .15s,background .15s}
+.btn:hover{filter:brightness(1.1)}
+.btn.o{background:var(--card);color:var(--tx);border-color:var(--bd)}
+.btn.o:hover{background:var(--sub);filter:none}
+.field{display:flex;align-items:center;gap:8px;border:1px solid var(--bd);background:var(--card);border-radius:var(--rm);padding:7px 12px;color:var(--mut)}
+.kbd{border:1px solid var(--bd);border-radius:5px;padding:0 6px;font-size:11px;direction:ltr;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--rc)}
+.pad{padding:20px}
+/* stepper */
+.cycle{display:flex;margin-bottom:22px;padding:18px 22px}
+.cycle .st{flex:1;position:relative;font-size:12.5px;padding-top:24px}
+.cycle .st::before{content:"";position:absolute;top:5px;inset-inline:0;height:2px;background:var(--track)}
+.cycle .st.dn::before{background:var(--ac)}
+.cycle .st::after{content:"";position:absolute;top:0;inset-inline-start:0;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--track)}
+.cycle .st.dn::after{background:var(--ac);border-color:var(--ac)}
+.cycle .st.cur::after{border-color:var(--ac);box-shadow:0 0 0 4px var(--acs)}
+.cycle .st.cur::before{background:linear-gradient(to left,var(--ac) 50%,var(--track) 50%)}
+.cycle b{display:block;font-weight:600}
+.cycle .cur b{color:var(--ac)}
+/* kpis */
+.kpis{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:16px;margin-bottom:22px}
+.kpi{padding:18px 20px}
+.kpi .n{font-size:32px;font-weight:600;line-height:1.3;letter-spacing:-.5px}
+.kpi .d{font-size:12px;font-weight:600}
+.score{display:flex;gap:18px;align-items:center}
+.rg{stroke-dasharray:264;stroke-dashoffset:264;transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1) .1s}
+.go .rg{stroke-dashoffset:var(--off)}
+.bar{height:5px;border-radius:9px;background:var(--track);overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;width:0;border-radius:9px;background:var(--ac);transition:width 1s cubic-bezier(.2,.8,.2,1) .15s}
+.go .bar i{width:var(--w)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:1px 10px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.chip.ok{background:var(--okbg);color:var(--okx)}.chip.risk{background:var(--rkbg);color:var(--rkx)}.chip.bad{background:var(--bdbg);color:var(--bdx)}.chip.none{background:var(--nbg);color:var(--mut)}
+.cols{display:grid;grid-template-columns:1.7fr 1fr;gap:16px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:right;font-weight:500;font-size:12px;color:var(--mut);padding:10px 16px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.tbl td{padding:12px 16px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.tbl tbody tr{transition:background .15s}.tbl tbody tr:hover{background:var(--sub)}
+.tbl tr:last-child td{border:0}
+.tbl tr.grp td{background:var(--sub);font-weight:600;font-size:12.5px;padding:8px 16px}
+.cardh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--bd)}
+.li{display:flex;gap:12px;padding:14px 20px;border-bottom:1px solid var(--bd);align-items:flex-start}
+.li:last-child{border:0}
+.li .ic{width:30px;height:30px;border-radius:var(--rm);display:grid;place-items:center;background:var(--sub);color:var(--mut);flex:none}
+.link{color:var(--ac);font-weight:600;font-size:12.5px}
+.val{width:90px;text-align:center;padding:5px 8px;border-radius:var(--rm);border:1px solid var(--bd);background:var(--card);font-weight:600;transition:.15s}
+.val:hover{border-color:var(--ctl)}
+.val:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px var(--acs)}
+.pc{display:flex;gap:10px;align-items:center;min-width:140px}.pc b{min-width:40px;font-weight:600}.pc .bar{flex:1}
+.pc .bar i{transition:width .4s,background .3s}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:#111;color:#fff;border-radius:10px;padding:9px 18px;opacity:0;transition:.3s;font-size:13px;z-index:50}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:6px}
+
+/* ───── M1 · شفق مینیمال ───── */
+.M1{--bg:#fafafc;--card:#fff;--sub:#f6f6fa;--bd:#ececf3;--ctl:#c9c9da;--tx:#16162a;--mut:#6c6c86;--ac:#5b4bdb;--acs:#5b4bdb1f;--track:#ececf4;--rl:18px;--rc:14px;--rm:9px;
+ --sbg:#fafafc;--sbd:#ececf3;--stx:#55556f;--smut:#9a9ab0;--shov:#f1f1f8;--sact:#ecebfb;--satx:#4a3bc7;--btx:#16162a;
+ --okbg:#e6f4ee;--okx:#1f6b4a;--rkbg:#fbf0dc;--rkx:#8a5a10;--bdbg:#fbe7e5;--bdx:#a02a24;--nbg:#efeff5}
+/* ───── M2 · رسمی ───── */
+.M2{--bg:#f4f5f7;--card:#fff;--sub:#f4f6f9;--bd:#dde2ea;--ctl:#b7c0cd;--tx:#101c2e;--mut:#5d6b80;--ac:#1d3a63;--acs:#1d3a6326;--track:#e3e8ef;--rl:10px;--rc:6px;--rm:5px;
+ --sbg:#10213a;--sbd:#1b3253;--stx:#b4c1d6;--smut:#6f84a3;--shov:#182d4c;--sact:#1f3a62;--satx:#fff;--btx:#fff;
+ --okbg:#e2f0e8;--okx:#1d5c3f;--rkbg:#f6ecd4;--rkx:#7a5410;--bdbg:#f6e0de;--bdx:#8f2620;--nbg:#e9edf3}
+.M2 h1{font-size:21px}.M2 .kpi .n{font-weight:700}.M2 .brand i{background:#b8964f}
+.M2 .tbl th{background:var(--sub);text-transform:none}
+/* ───── M3 · گرافیت ───── */
+.M3{--bg:#f7f7f4;--card:#fff;--sub:#f7f7f3;--bd:#e7e6e0;--ctl:#cfcdc4;--tx:#1b1b19;--mut:#737269;--ac:#0e6f66;--acs:#0e6f6624;--track:#ebeae4;--rl:14px;--rc:12px;--rm:8px;
+ --sbg:#f7f7f4;--sbd:#e7e6e0;--stx:#5f5e55;--smut:#a09f94;--shov:#eeede7;--sact:#e3efec;--satx:#0b5a52;--btx:#1b1b19;
+ --okbg:#e3f0e8;--okx:#1f6240;--rkbg:#f8edd2;--rkx:#7d5410;--bdbg:#f8e3df;--bdx:#9a2a20;--nbg:#efeee8}
+.M3 .kpi .n{font-weight:500}.M3 .main{padding-inline:36px}
+
+@media(max-width:1000px){.kpis{grid-template-columns:1fr 1fr}.cols{grid-template-columns:1fr}.side{width:68px}.nv span,.sep,.brand span,.user div:last-child{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rg{stroke-dashoffset:var(--off)}.bar i{width:var(--w)}}
+</style>
+</head>
+<body>
+<div class="picker"><b>OKR · نسخهٔ مینیمال</b>
+ <div class="seg" id="segT"><button data-t="M1" class="on">۱ · شفق مینیمال</button><button data-t="M2">۲ · رسمی</button><button data-t="M3">۳ · گرافیت</button></div>
+ <div class="seg" id="segS"><button data-s="dash" class="on">داشبورد</button><button data-s="entry">ثبت پایش</button></div></div>
+<p class="brief" id="brief"></p>
+<div class="stage" id="stage"></div>
+<div class="toast" id="toast">پیش‌نویس ذخیره شد</div>
+<script>
+const fa=n=>Number(n).toLocaleString('fa-IR',{useGrouping:false,maximumFractionDigits:1});
+const P=n=>fa(n)+'٪';
+const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M21.5 20a6.5 6.5 0 0 0-4-6"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',warn:'<path d="M12 3l10 18H2zM12 10v5"/>',down:'<path d="M7 7l10 10M17 8v9H8"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'};
+const ico=k=>`<svg class="i" viewBox="0 0 24 24">${IC[k]}</svg>`;
+const status=p=>p==null?['none','ثبت نشده']:p>=70?['ok','روی مسیر']:p>=40?['risk','در خطر']:['bad','عقب'];
+const chip=p=>{const s=status(p);return `<span class="chip ${s[0]}">${s[1]}</span>`};
+const bar=p=>`<div class="bar"><i style="--w:${p}%"></i></div>`;
+function ring(p,size,stroke,col){const off=264*(1-p/100);return `<div style="position:relative;width:${size}px;height:${size}px;flex:none"><svg viewBox="0 0 100 100" width="${size}" height="${size}" style="transform:rotate(-90deg)"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--track)" stroke-width="${stroke}"/><circle class="rg" style="--off:${off}" cx="50" cy="50" r="42" fill="none" stroke="${col}" stroke-width="${stroke}" stroke-linecap="round"/></svg>${size>90?`<div class="num" style="position:absolute;inset:0;display:grid;place-items:center;font-weight:600;font-size:${size*.25}px">${P(p)}</div>`:''}</div>`}
+const U=[['فروش داخلی','مدیریت',61,74,7,14,11],['فروش صادراتی','مدیریت',48,52,4,9,5],['تولید','معاونت',55,41,-14,22,9],['کنترل کیفیت','مدیریت',70,83,13,11,10],['تأمین و خرید','مدیریت',36,47,11,12,6],['منابع انسانی','معاونت',66,71,5,10,8],['مالی','معاونت',58,null,0,13,0],['فناوری اطلاعات','مدیریت',44,68,24,15,11]];
+const KRS=[{g:'فروش داخلی',o:'رشد فروش محصولات چرمی',i:[['۱.۱','افزایش فروش ماهانه (میلیارد تومان)',60,120,94],['۱.۲','کاهش زمان تحویل سفارش (روز)',20,10,13],['۱.۳','راه‌اندازی ۳ نمایندگی جدید',0,3,null]]},{g:'تولید',o:'ارتقای کیفیت خط تولید',i:[['۲.۱','کاهش ضایعات (درصد)',9,4,6.8],['۲.۲','اتمام مایلستون خط ۲ (درصد)',0,100,80],['۲.۳','آموزش اپراتورها (نفر)',0,40,12]]}];
+const calc=(b,g,v)=>{if(v===''||v==null||isNaN(v))return null;const p=g>b?(v-b)/(g-b):(b-v)/(b-g);return Math.round(Math.max(0,Math.min(1,p))*100)};
+const NAV=[['home','خانه'],['target','اهداف'],['cal','جلسات'],['users','سازمان'],['link','تعهدات'],['chart','گزارش‌ها'],['file','مستندات']];
+const BR={M1:'<b>۱ · شفق مینیمال</b> — همان روح «شفق» با ظاهر آرام: سطوح تخت و سفید، خط‌های نازک، بدون گرادیان و شیشه، فقط یک رنگ بنفش-نیلی برای تأکید. مدرن و سبک؛ نزدیک‌ترین به آنچه پسندیدید.',M2:'<b>۲ · رسمی</b> — سایدبار سرمه‌ای، گوشه‌های کم‌گرد، تأکید کم‌رنگ طلایی فقط روی لوگو. جدی و سازمانی؛ مناسب مدیران ارشد، گزارش‌های رسمی و ارائه به هیئت‌مدیره.',M3:'<b>۳ · گرافیت</b> — زمینهٔ خاکستری گرم، تأکید سبز-فیروزه‌ای تیره، عدد‌های سبک‌تر. گرم‌تر و انسانی‌تر از دو نسخهٔ دیگر ولی همچنان کاملاً مینیمال.'};
+
+function dash(){
+ return `<div class="head"><div><div class="crumb">خانه ‹ داشبورد سازمان</div><h1>داشبورد سازمان</h1></div>
+ <div style="display:flex;gap:10px;flex-wrap:wrap"><div class="field">${ico('search')}<span>جستجو</span><span class="kbd">Ctrl K</span></div><div class="field" style="color:var(--tx);font-weight:500">چرخه بهار ۱۴۰۵ ▾</div><button class="btn">${ico('file')} گزارش پایان پایش</button></div></div>
+ <div class="card cycle">${[['شروع','۱۰ فروردین',1],['پایش ۱','۱۵ اردیبهشت',1],['پایش ۲','در جریان',2],['پایش ۳','۲۰ مرداد'],['نهایی','۳۱ مرداد']].map(s=>`<div class="st ${s[2]==1?'dn':s[2]==2?'cur':''}"><b>${s[0]}</b><span class="mut tiny">${s[1]}</span></div>`).join('')}</div>
+ <div class="kpis">
+  <div class="card kpi score">${ring(62,84,7,'var(--ac)')}<div><div class="mut tiny">امتیاز سازمان</div><div class="n num">${P(62)}</div><div class="d" style="color:var(--okx)">+${P(15)} نسبت به پایش ۱</div></div></div>
+  <div class="card kpi"><div class="mut tiny">روی مسیر</div><div class="n num">${fa(118)}</div><div class="d mut">از ${fa(164)} نتیجه کلیدی</div></div>
+  <div class="card kpi"><div class="mut tiny">در خطر یا عقب</div><div class="n num" style="color:var(--rkx)">${fa(34)}</div><div class="d mut">${fa(7)} مورد بدون مسئول</div></div>
+  <div class="card kpi"><div class="mut tiny">ثبت‌نشده</div><div class="n num">${fa(12)}</div><div class="d mut">مهلت: ۲۵ آبان</div></div></div>
+ <div class="cols">
+  <div class="card" style="overflow:hidden"><div class="cardh"><h2>عملکرد واحدها</h2><span class="mut tiny">پایش ۲</span></div>
+   <table class="tbl"><thead><tr><th>واحد</th><th>پایش ۱</th><th>پایش ۲</th><th style="width:26%">پیشرفت</th><th>تغییر</th><th>وضعیت</th></tr></thead><tbody>
+   ${U.map(u=>`<tr><td><b style="font-weight:600">${u[0]}</b><div class="mut tiny">${u[1]} · ${fa(u[5])} KR</div></td><td class="num mut">${P(u[2])}</td><td class="num" style="font-weight:600">${u[3]==null?'—':P(u[3])}</td><td>${bar(u[3]||0)}</td><td class="num tiny" style="color:${u[4]<0?'var(--bdx)':'var(--okx)'};font-weight:600">${u[3]==null?'—':(u[4]<0?'−':'+')+fa(Math.abs(u[4]))}</td><td>${u[3]==null?'<span class="chip none">بدون جلسه</span>':chip(u[3])}</td></tr>`).join('')}</tbody></table></div>
+  <div style="display:grid;gap:16px;align-content:start">
+   <div class="card"><div class="cardh"><h2>نیازمند توجه</h2><span class="chip bad">۳</span></div>
+    <div class="li"><div class="ic">${ico('clock')}</div><div style="flex:1"><b style="font-weight:600">واحد مالی زمان جلسه ندارد</b><div class="mut tiny">تیم از زمان جلسه مطلع نیست</div></div><a class="link" href="#">زمان‌بندی</a></div>
+    <div class="li"><div class="ic">${ico('down')}</div><div style="flex:1"><b style="font-weight:600">افت ۱۴٪ در واحد تولید</b><div class="mut tiny">چرا؟ جزئیات امتیاز را ببینید</div></div><a class="link" href="#">مشاهده</a></div>
+    <div class="li"><div class="ic">${ico('warn')}</div><div style="flex:1"><b style="font-weight:600">۷ نتیجه کلیدی بدون مسئول</b><div class="mut tiny">بیشترین در واحد تولید</div></div><a class="link" href="#">تخصیص</a></div></div>
+   <div class="card"><div class="cardh"><h2>جلسات پیش رو</h2><a class="link" href="#">همه</a></div>
+    ${[['۲۶ آبان','تولید · پایش ۲','۱۰:۳۰ · اتاق شورا'],['۲۷ آبان','کنترل کیفیت · پایش ۲','۱۴:۰۰ · آنلاین'],['۳۰ آبان','فروش صادراتی · پایش ۲','۰۹:۰۰ · اتاق ۲']].map(e=>`<div class="li"><div class="ic" style="width:auto;padding:0 9px;font-size:11.5px;font-weight:600;color:var(--tx)">${e[0]}</div><div><b style="font-weight:600">${e[1]}</b><div class="mut tiny">${e[2]}</div></div></div>`).join('')}</div>
+  </div></div>`;
+}
+function entry(){
+ let rows='';KRS.forEach(g=>{rows+=`<tr class="grp"><td colspan="6"><span class="mut">${g.g} ‹</span> ${g.o}</td></tr>`;g.i.forEach(k=>{const p=calc(k[2],k[3],k[4]);rows+=`<tr data-b="${k[2]}" data-g="${k[3]}"><td class="num mut">${k[0]}</td><td style="min-width:220px">${k[1]}</td><td class="num mut" style="white-space:nowrap">${fa(k[2])} ← <b style="color:var(--tx);font-weight:600">${fa(k[3])}</b></td><td><input class="val num" aria-label="${k[1]}" value="${k[4]==null?'':fa(k[4])}" placeholder="—"></td><td><div class="pc"><b class="num pv">${p==null?'—':P(p)}</b>${bar(p||0)}</div></td><td class="st">${chip(p)}</td></tr>`})});
+ return `<div class="head"><div><div class="crumb">جلسه واحد ‹ فروش و تولید</div><h1>پایش ۲ · ثبت مقادیر</h1><div class="mut tiny">جلسه: ۲۵ آبان ۱۴۰۵، ساعت ۱۰:۳۰ · اتاق شورا</div></div><div style="display:flex;gap:10px"><button class="btn o">خروجی Excel</button><button class="btn">${ico('check')} ثبت و ارسال</button></div></div>
+ <div class="kpis" style="grid-template-columns:repeat(4,1fr)">${[['پیشرفت واحد','avg'],['روی مسیر','ok'],['در خطر یا عقب','bad'],['ثبت‌نشده','none']].map(s=>`<div class="card kpi"><div class="mut tiny">${s[0]}</div><div class="n num" data-s="${s[1]}">—</div></div>`).join('')}</div>
+ <div class="card" style="overflow:auto"><table class="tbl entry"><thead><tr><th>#</th><th>نتیجه کلیدی</th><th>مبنا ← هدف</th><th>مقدار این پایش</th><th>پیشرفت</th><th>وضعیت</th></tr></thead><tbody>${rows}</tbody></table>
+ <div style="padding:10px 20px;background:var(--sub);border-top:1px solid var(--bd);display:flex;justify-content:space-between" class="mut tiny"><span class="saved">پیش‌نویس خودکار ذخیره می‌شود</span><span><span class="kbd">Tab</span> ردیف بعد</span></div></div>`;
+}
+function wire(app){let tm;const upd=()=>{let s=0,n=0,ok=0,bad=0,no=0;app.querySelectorAll('.entry tbody tr:not(.grp)').forEach(tr=>{const raw=tr.querySelector('input').value.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫','.');const p=calc(+tr.dataset.b,+tr.dataset.g,raw===''?null:parseFloat(raw));tr.querySelector('.pv').textContent=p==null?'—':P(p);const b=tr.querySelector('.bar i');b.style.setProperty('--w',(p||0)+'%');b.style.width=(p||0)+'%';const st=status(p);tr.querySelector('.st').innerHTML=`<span class="chip ${st[0]}">${st[1]}</span>`;n++;s+=p||0;st[0]==='ok'?ok++:st[0]==='none'?no++:bad++});const set=(k,v)=>app.querySelector(`[data-s=${k}]`).textContent=v;set('avg',P(Math.round(s/n)));set('ok',fa(ok));set('bad',fa(bad));set('none',fa(no))};
+ app.querySelectorAll('.entry input').forEach(i=>{i.addEventListener('focus',()=>i.select());i.addEventListener('input',()=>{upd();clearTimeout(tm);app.querySelector('.saved').textContent='در حال ذخیره…';tm=setTimeout(()=>{app.querySelector('.saved').textContent='پیش‌نویس ذخیره شد ✓';const t=document.getElementById('toast');t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1400)},500)})});upd()}
+const stage=document.getElementById('stage');
+['M1','M2','M3'].forEach(t=>stage.insertAdjacentHTML('beforeend',`<section class="app ${t}" data-t="${t}"><aside class="side"><div class="brand"><i>O</i><span>OKR</span></div>${NAV.map((n,i)=>`<a class="nv ${i==0?'act':''}" href="#">${ico(n[0])}<span>${n[1]}</span></a>`).join('')}<div class="sep">مدیریت</div><a class="nv" href="#">${ico('gear')}<span>تنظیمات</span></a><div class="user"><div class="av">م</div><div style="line-height:1.5"><div style="font-weight:600;font-size:13px">مریم رضایی</div><div class="tiny" style="color:var(--smut)">هماهنگ‌کننده</div></div></div></aside><main class="main"><div class="screen" data-s="dash">${dash()}</div><div class="screen" data-s="entry">${entry()}</div></main></section>`));
+document.querySelectorAll('.app').forEach(wire);
+const q=new URLSearchParams(location.search);const st={t:['M1','M2','M3'].includes(q.get('t'))?q.get('t'):'M1',s:q.get('s')==='entry'?'entry':'dash'};
+function render(){document.querySelectorAll('.app').forEach(a=>{const on=a.dataset.t===st.t;a.classList.toggle('show',on);a.classList.remove('go');a.querySelectorAll('.screen').forEach(s=>s.classList.toggle('show',on&&s.dataset.s===st.s))});
+ document.querySelectorAll('#segT button').forEach(b=>b.classList.toggle('on',b.dataset.t===st.t));document.querySelectorAll('#segS button').forEach(b=>b.classList.toggle('on',b.dataset.s===st.s));
+ document.getElementById('brief').innerHTML=BR[st.t];const a=document.querySelector('.app.show');requestAnimationFrame(()=>requestAnimationFrame(()=>a.classList.add('go')))}
+document.querySelectorAll('#segT button').forEach(b=>b.onclick=()=>{st.t=b.dataset.t;render()});document.querySelectorAll('#segS button').forEach(b=>b.onclick=()=>{st.s=b.dataset.s;render()});
+render();
+</script>
+</body>
+</html>

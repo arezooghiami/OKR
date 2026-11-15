@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OKR — نمای سازمان</title>
+<style>
+@font-face{font-family:Vazirmatn;font-weight:400;src:url(fonts/Vazirmatn-Regular.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:500;src:url(fonts/Vazirmatn-Medium.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:600;src:url(fonts/Vazirmatn-SemiBold.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:700;src:url(fonts/Vazirmatn-Bold.woff2) format("woff2");font-display:swap}
+
+:root{
+  --ground:#f3f8f9;--surface:#fff;--raised:#f4f7f8;--active:#e3eced;--border:#e4eaec;--rule:#eff3f4;--control:#cbd5d8;
+  --text:#111a1d;--muted:#566468;--faint:#66757a;
+  --accent:#12708c;--accent-soft:#e4f1f5;--primary:#111a1d;--primary-ink:#fff;
+  --positive:#1e7b4f;--negative:#c4242a;--warning:#92400e;
+  --ok-bg:#dcf5e6;--ok-ink:#0b3d22;--risk-bg:#fdf1d3;--risk-ink:#6b3d06;--bad-bg:#fde7e4;--bad-ink:#7a1a1d;--none-bg:#e8eef0;--none-ink:#3a4a4f;
+  --chart-1:#12708c;--chart-muted:#c9d5d9;--grid:#e8eef0;
+  --font:Vazirmatn,Tahoma,"Segoe UI",system-ui,sans-serif;
+  --gap:24px;--r-card:10px;--r-ctl:7px;--r-sheet:16px;--ctl:32px;
+}
+:root[data-theme=dark]{
+  --ground:#0b0f12;--surface:#12181c;--raised:#182026;--active:#1d2830;--border:#1f2a31;--rule:#192229;--control:#34434c;
+  --text:#f2f6f7;--muted:#a9b7bd;--faint:#8c9ba2;
+  --accent:#4cc3e0;--accent-soft:#12303a;--primary:#f2f6f7;--primary-ink:#0b0f12;
+  --positive:#4fd18b;--negative:#ff7a7f;--warning:#f0b35a;
+  --ok-bg:#12301f;--ok-ink:#7ee6ae;--risk-bg:#33290d;--risk-ink:#f4cf72;--bad-bg:#3a1618;--bad-ink:#ffadb0;--none-bg:#1d2830;--none-ink:#b6c4ca;
+  --chart-1:#4cc3e0;--chart-muted:#33434c;--grid:#1d2830;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--ground);color:var(--text);font:400 14px/22px var(--font);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px}
+.num{font-variant-numeric:tabular-nums}
+bdi{unicode-bidi:isolate}
+.ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+svg{display:block}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---- frame: sidebar + top bar share the ground; the sheet sits inside ---- */
+.shell{display:grid;grid-template-columns:228px minmax(0,1fr);grid-template-rows:48px minmax(0,1fr);height:100vh}
+.side{grid-row:1/3;display:flex;flex-direction:column;padding:12px 12px 12px 8px;gap:2px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 10px 14px}
+.brand b{font-weight:700;font-size:15px;letter-spacing:0}
+.brand small{display:block;color:var(--faint);font-size:12px;line-height:16px;font-weight:400}
+.scope{display:flex;align-items:center;gap:8px;margin:0 2px 12px;padding:7px 10px;border-radius:var(--r-ctl);background:var(--surface);border:1px solid var(--border);width:calc(100% - 4px);text-align:start}
+.scope span{flex:1;min-width:0}
+.scope em{display:block;font-style:normal;font-size:12px;color:var(--faint);line-height:16px}
+.nav-g{color:var(--faint);font-size:12px;padding:16px 12px 6px}
+.nav{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px;border-radius:8px;color:var(--muted);background:none;border:0;width:100%;text-align:start;transition:background .15s,color .15s}
+.nav:hover{background:color-mix(in srgb,var(--active) 55%,transparent);color:var(--text)}
+.nav[aria-current=page]{background:var(--active);color:var(--text);font-weight:500}
+.nav .ct{margin-inline-start:auto;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:0 7px;line-height:18px}
+.side-foot{margin-top:auto;padding-top:12px;display:flex;flex-direction:column;gap:2px}
+.me{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.me small{display:block;color:var(--faint);font-size:12px;line-height:16px}
+
+.topbar{grid-column:2;display:flex;align-items:center;gap:12px;padding:0 20px 0 12px;position:relative}
+.search{position:absolute;inset-inline:0;margin-inline:auto;width:min(548px,46%);height:32px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-ctl);color:var(--faint);text-align:start}
+.search kbd{margin-inline-start:auto;font:500 11px/18px var(--font);border:1px solid var(--border);border-radius:4px;padding:0 6px;color:var(--faint)}
+.tb-sp{flex:1}
+.ibtn{width:32px;height:32px;display:grid;place-items:center;border:0;background:none;border-radius:var(--r-ctl);color:var(--muted);position:relative;z-index:1}
+.ibtn:hover{background:var(--active);color:var(--text)}
+
+.sheet{grid-column:2;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sheet);margin:0 0 8px 8px;overflow:auto;min-width:0}
+.page{padding:24px;max-width:1440px}
+.crumb{color:var(--faint);font-size:12px;margin-bottom:6px}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:22px;line-height:32px;font-weight:700}
+.lede{color:var(--muted);font-size:14px;margin-top:2px}
+.lede b{color:var(--text);font-weight:600}
+.btn{height:var(--ctl);padding:0 14px;border-radius:var(--r-ctl);border:1px solid var(--control);background:var(--surface);display:inline-flex;align-items:center;gap:8px;font-weight:500;transition:background .15s,transform .1s}
+.btn:hover{background:var(--raised)}.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn.pri:hover{opacity:.9}
+.scope-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:20px 0 20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tabs{display:flex;gap:4px}
+.tab{height:38px;padding:0 12px;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);margin-bottom:-1px;font-weight:500}
+.tab[aria-selected=true]{color:var(--text);border-color:var(--accent);font-weight:600}
+.tab:hover{color:var(--text)}
+.range{display:flex;gap:8px;padding-bottom:6px}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:var(--gap);align-items:start}
+.col{display:flex;flex-direction:column;gap:var(--gap);min-width:0}
+.card{border:1px solid var(--border);border-radius:var(--r-card);background:var(--surface);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 12px}
+h2{font-size:16px;line-height:24px;font-weight:600}
+.sub{font-size:12px;color:var(--faint)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr)}
+.kpi{padding:16px 20px;border-inline-start:1px solid var(--border)}
+.kpi:first-child{border-inline-start:0}
+.kpi .l{color:var(--muted)}
+.kpi .v{font-size:28px;line-height:40px;font-weight:400;margin-top:2px}
+.kpi .v small{font-size:14px;color:var(--faint);margin-inline-start:4px}
+.kpi .c{font-size:12px;color:var(--faint)}
+.neg{color:var(--negative)}.pos{color:var(--positive)}.mut{color:var(--faint)}
+
+/* unit progress list with the expected-progress tick */
+.ul{padding:0 20px 8px}
+.uh,.ur{display:grid;grid-template-columns:150px minmax(180px,1fr) 56px 76px 76px 92px;align-items:center;gap:16px}
+.uh{height:32px;color:var(--faint);font-size:12px;border-bottom:1px solid var(--border)}
+.ur{height:46px;border-bottom:1px solid var(--rule);cursor:pointer;margin-inline:-20px;padding-inline:20px;transition:background .15s}
+.ur:hover{background:var(--raised)}
+.ur:last-child{border-bottom:0}
+.uh .r,.ur .r{text-align:end}
+.nm{font-weight:500;display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:8px;border-radius:99px;background:var(--chart-muted);opacity:1}
+.track i{position:absolute;inset-block:0;inset-inline-start:0;border-radius:99px;background:var(--chart-1)}
+.track u{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--text);border-radius:1px;transform:translateX(-1px)}
+[dir=rtl] .track u{transform:translateX(1px)}
+.hl{display:flex;align-items:center;gap:6px;color:var(--faint);font-size:12px}
+.hl u{display:inline-block;width:2px;height:12px;background:var(--text);border-radius:1px}
+
+.pill{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap;flex:none}
+.ok{background:var(--ok-bg);color:var(--ok-ink)}.risk{background:var(--risk-bg);color:var(--risk-ink)}.bad{background:var(--bad-bg);color:var(--bad-ink)}.none{background:var(--none-bg);color:var(--none-ink)}
+
+/* trend chart */
+.chart{padding:0 20px 16px}
+.chart svg{width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--font);font-size:12px;fill:var(--faint)}
+.lg{display:flex;gap:16px;align-items:center;color:var(--muted);font-size:12px}
+.lg span{display:inline-flex;align-items:center;gap:6px}
+.lg s{display:inline-block;width:16px;height:0;border-top:2px solid var(--chart-1)}
+.lg s.d{border-top-style:dashed}.lg s.g{border-top-color:var(--faint);border-top-width:1px}
+
+/* rail */
+.rail h3{font-size:16px;font-weight:600;line-height:24px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+.rail h3 a{font-size:12px;font-weight:400;color:var(--muted)}
+.rail .card{margin-bottom:16px}
+.rl{padding:0 16px}
+.rw{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--rule)}
+.rw:last-child{border-bottom:0}
+.rw p{font-size:13px;line-height:20px}.rw p b{font-weight:600}
+.rw small{display:block;color:var(--faint);font-size:12px;line-height:18px}
+.rw .go{margin-inline-start:auto;flex:none;font-size:12px;font-weight:600;color:var(--accent);background:none;border:0;padding:2px 0}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;flex:none}
+.rail .foot{padding:10px 16px 14px}
+.btn.wide{width:100%;justify-content:center}
+
+/* entry table */
+.tbl{width:100%;border-collapse:separate;border-spacing:0}
+.tbl th{font-weight:400;font-size:12px;color:var(--faint);text-align:start;height:36px;padding:0 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{height:52px;padding:0 12px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.tbl th.r,.tbl td.r{text-align:end}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:var(--raised)}
+.tbl .grp td{height:44px;background:var(--surface);font-weight:600;border-bottom:1px solid var(--border);padding-top:8px}
+.tbl .grp td span{color:var(--faint);font-weight:400;margin-inline-start:8px;font-size:12px}
+.tbl tbody tr.grp:hover td{background:var(--surface)}
+.kr{display:flex;flex-direction:column;line-height:20px}
+.kr b{font-weight:500}.kr small{color:var(--faint);font-size:12px}
+.who{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.who .av{width:24px;height:24px;font-size:11px}
+.inwrap{position:relative;display:inline-flex;align-items:center;gap:6px}
+.in{width:84px;height:32px;text-align:end;padding:0 10px;border:1px solid var(--control);border-radius:var(--r-ctl);background:var(--surface);font-variant-numeric:tabular-nums;direction:ltr}
+.in:hover{border-color:var(--muted)}
+.in:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.in.empty{border-style:dashed}
+.in.chg{border-color:var(--accent)}
+.dot{position:absolute;inset-inline-start:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
+.pc{display:flex;align-items:center;gap:10px;min-width:170px}
+.pc span{width:40px;text-align:end;font-weight:500}
+.pc .track{flex:1}
+.autosave{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:12px}
+.autosave i{width:6px;height:6px;border-radius:50%;background:var(--positive)}
+.tfoot{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid var(--border);color:var(--faint);font-size:12px}
+
+[hidden]{display:none!important}
+@media(max-width:1180px){.grid{grid-template-columns:1fr}.uh,.ur{grid-template-columns:130px minmax(120px,1fr) 52px 64px 64px 84px}}
+@media(max-width:800px){
+  .shell{grid-template-columns:1fr;grid-template-rows:48px 1fr}
+  .side{display:none}.topbar{grid-column:1}.sheet{grid-column:1;margin:0}
+  .search{display:none}.kpis{grid-template-columns:1fr 1fr}.kpi:nth-child(3){border-inline-start:0}
+  .kpi:nth-child(n+3){border-top:1px solid var(--border)}
+  .page{padding:16px}.card{overflow:auto}.uh,.ur{min-width:560px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side" aria-label="ناوبری اصلی">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><circle cx="15" cy="15" r="9" fill="none" stroke="#fff" stroke-width="1.6" opacity=".55"/><circle cx="15" cy="15" r="5" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M15 15L23 7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="15" cy="15" r="1.6" fill="#fff"/></svg>
+      <div><b>OKR</b><small>مدیریت اهداف سازمان</small></div>
+    </div>
+    <button class="scope" type="button"><span>چرم مشهد<em>چرخه ۱۴۰۵ · دور ۲ باز است</em></span><svg class="i" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg></button>
+    <button class="nav" data-go="overview" aria-current="page"><svg class="i" viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="6" rx="1"/><rect x="9" y="2" width="5" height="3" rx="1"/><rect x="9" y="7" width="5" height="7" rx="1"/><rect x="2" y="10" width="5" height="4" rx="1"/></svg>نمای سازمان</button>
+    <button class="nav"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5c.6-2.4 2.5-3.5 5-3.5s4.4 1.1 5 3.5"/></svg>KRهای من<span class="ct num" id="ctMine"></span></button>
+    <button class="nav" data-go="entry"><svg class="i" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 7h12M6.5 3v10"/></svg>ثبت دور مرور</button>
+    <div class="nav-g">برنامه</div>
+    <button class="nav"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2"/></svg>اهداف و نتایج کلیدی</button>
+    <button class="nav"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="3.5" r="1.5"/><circle cx="3.5" cy="12.5" r="1.5"/><circle cx="12.5" cy="12.5" r="1.5"/><path d="M8 5v3M8 8H3.5v3M8 8h4.5v3"/></svg>همترازی</button>
+    <button class="nav"><svg class="i" viewBox="0 0 16 16"><path d="M2.5 6h9l-2-2M13.5 10h-9l2 2"/></svg>تعهدات بین‌تیمی<span class="ct num" id="ctCom"></span></button>
+    <div class="nav-g">گزارش</div>
+    <button class="nav"><svg class="i" viewBox="0 0 16 16"><path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3M6 9h4M6 11.5h4"/></svg>گزارش‌ها</button>
+    <div class="side-foot">
+      <button class="nav"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg>تنظیمات</button>
+      <div class="me"><span class="av" style="background:#e6f0d9;color:#34531a">م</span><div>مهسا کریمی<small>هماهنگ‌کننده OKR</small></div></div>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <button class="search" type="button"><svg class="i" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>جستجوی واحد، هدف، نتیجه کلیدی یا نفر<kbd>Ctrl K</kbd></button>
+    <span class="tb-sp"></span>
+    <button class="ibtn" id="theme" type="button" aria-label="تغییر تم روشن و تیره"><svg class="i" viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 116.5 3a4.5 4.5 0 006.5 6.5z"/></svg></button>
+    <button class="ibtn" type="button" aria-label="اعلان‌ها"><svg class="i" viewBox="0 0 16 16"><path d="M4 11V7a4 4 0 118 0v4l1 1.5H3zM6.5 14h3"/></svg></button>
+  </header>
+
+  <main class="sheet" id="sheet"></main>
+</div>
+
+<script>
+/* ============ data (one source of truth; every figure on screen is computed from it) ============ */
+const EXPECTED = 50;                 // expected progress at the end of round 2 (of 4)
+const ROUND_LABELS = ['دور ۱','دور ۲','دور ۳','دور ۴'];
+const EXP_BY_ROUND = [25,50,75,100];
+const DEADLINE_DAYS = 21;            // 4 آبان → 25 آبان
+
+const clamp = v => Math.max(0,Math.min(100,v));
+function pct(k, v){
+  if (v===null||v===undefined) return null;
+  if (k.type==='inc') return clamp((v-k.b)/(k.t-k.b)*100);
+  if (k.type==='dec') return clamp((k.b-v)/(k.b-k.t)*100);
+  return clamp(v);                    // milestone 0-100
+}
+// Sales unit: the 8 KRs on the entry screen. owners = people
+const people = {
+  r:{n:'رضا احمدی',c:['#fde7d8','#6b3512']}, s:{n:'سارا موسوی',c:['#e3ecfb','#1f3f77']},
+  a:{n:'امیر نوری',c:['#e6f0d9','#34531a']}, l:{n:'لیلا صادقی',c:['#f3e3f4','#6a2a6e']},
+  h:{n:'حسین کاظمی',c:['#dcf2ef','#0d4f48']}, m:{n:'مهسا کریمی',c:['#e6f0d9','#34531a']}
+};
+const salesObjectives = [
+ {t:'رشد فروش محصولات چرمی در بازار داخل', krs:[
+  {id:'۱.۱',t:'افزایش فروش ماهانه',u:'میلیارد تومان',type:'inc',b:80,t2:120,r1:92,v:104,o:'r'},
+  {id:'۱.۲',t:'کاهش زمان تحویل سفارش',u:'روز',type:'dec',b:18,t2:10,r1:16,v:13,o:'a'},
+  {id:'۱.۳',t:'راه‌اندازی نمایندگی جدید',u:'نمایندگی',type:'inc',b:0,t2:3,r1:1,v:2,o:'r'},
+  {id:'۱.۴',t:'افزایش رضایت مشتریان',u:'درصد',type:'inc',b:72,t2:85,r1:75,v:78,o:'l'}]},
+ {t:'تقویت فروش سازمانی و کانال آنلاین', krs:[
+  {id:'۲.۱',t:'سهم فروش آنلاین از کل فروش',u:'درصد',type:'inc',b:8,t2:20,r1:11,v:13,saved:12,o:'s'},
+  {id:'۲.۲',t:'عقد قرارداد سازمانی جدید',u:'قرارداد',type:'inc',b:0,t2:12,r1:3,v:7,o:'s'},
+  {id:'۲.۳',t:'تکمیل سامانه فروش آنلاین',u:'درصد انجام',type:'ms',b:0,t2:100,r1:30,v:70,o:'h'},
+  {id:'۲.۴',t:'کاهش ریزش مشتریان',u:'درصد',type:'dec',b:14,t2:8,r1:13,v:null,o:'l'}]}
+];
+const salesKRs = salesObjectives.flatMap(o=>o.krs.map(k=>({...k,b:k.b,t:k.t2})));
+const salesScore = Math.round(salesKRs.reduce((s,k)=>s+(pct(k,k.v)||0),0)/salesKRs.length);
+const salesUnreg = salesKRs.filter(k=>k.v===null).length;
+
+const units = [
+ {n:'فروش داخلی',   krs:salesKRs.length, score:salesScore, unreg:salesUnreg, r1:24},
+ {n:'صادرات',        krs:6,  score:47, unreg:2, r1:21},
+ {n:'تولید',          krs:10, score:36, unreg:3, r1:19},
+ {n:'کنترل کیفیت',   krs:5,  score:58, unreg:0, r1:27},
+ {n:'تأمین و خرید',  krs:6,  score:52, unreg:1, r1:25},
+ {n:'مالی',           krs:5,  score:66, unreg:0, r1:29},
+ {n:'منابع انسانی',  krs:5,  score:44, unreg:2, r1:22},
+ {n:'فناوری اطلاعات',krs:7,  score:55, unreg:1, r1:23}
+];
+const totalKR = units.reduce((s,u)=>s+u.krs,0);
+const orgScore = Math.round(units.reduce((s,u)=>s+u.score*u.krs,0)/totalKR);
+const orgR1 = Math.round(units.reduce((s,u)=>s+u.r1*u.krs,0)/totalKR);
+const totalUnreg = units.reduce((s,u)=>s+u.unreg,0);
+const gap = u => u.score-EXPECTED;
+const status = u => { const g=gap(u); return g>=-5?'ok':g>=-12?'risk':'bad'; };
+const stLabel = {ok:'روی مسیر',risk:'در خطر',bad:'عقب',none:'ثبت‌نشده'};
+const behind = units.filter(u=>status(u)==='bad');
+const atRisk = units.filter(u=>status(u)==='risk');
+const worst = units.slice().sort((a,b)=>gap(a)-gap(b))[0];
+const commitments = [
+ {from:'تولید',to:'تأمین و خرید',t:'تأیید تأمین‌کننده چرم جدید',due:'۱۰ آبان',late:true,who:'a'},
+ {from:'صادرات',to:'فروش داخلی',t:'کاتالوگ جدید محصولات برای نمایشگاه',due:'۱۸ آبان',late:false,who:'s'},
+ {from:'فروش داخلی',to:'فناوری اطلاعات',t:'اتصال سامانه فروش آنلاین به انبار',due:'۲۲ آبان',late:false,who:'h'}
+];
+console.assert(units.reduce((s,u)=>s+u.unreg,0)===totalUnreg);
+console.assert(salesKRs.length===8);
+
+/* ============ formatting ============ */
+const fa = n => Number(n).toLocaleString('fa-IR',{maximumFractionDigits:1});
+const F = n => fa(Math.round(n));
+const sgn = n => `<span class="ltr num">${n>0?'+':n<0?'−':''}${fa(Math.abs(n))}</span>`.replace(/\+/,'+');
+const av = (k,cls='') => `<span class="av ${cls}" style="background:${people[k].c[0]};color:${people[k].c[1]}">${people[k].n[0]}</span>`;
+const initial = n => n[0];
+
+/* ============ screens ============ */
+function overview(){
+  const pts = [orgR1, orgScore];
+  const forecastR3 = Math.min(100, orgScore + (orgScore-orgR1));
+  const forecastR4 = Math.min(100, forecastR3 + (orgScore-orgR1));
+  // chart geometry (RTL: time runs right→left; x grows leftwards)
+  const W=560,H=210,L=40,R=16,T=14,B=30, iw=W-L-R, ih=H-T-B;
+  const x = i => W-R - i*(iw/3);          // i=0 at the right
+  const y = v => T + ih*(1-v/100);
+  const grid=[0,25,50,75,100].map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" class="num">${fa(v)}٪</text>`).join('');
+  const xl = ROUND_LABELS.map((l,i)=>`<text x="${x(i)}" y="${H-8}" text-anchor="middle">${l}</text>`).join('');
+  const exp = EXP_BY_ROUND.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  const act = [orgR1,orgScore].map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  const fc = `${x(1)},${y(orgScore)} ${x(2)},${y(forecastR3)} ${x(3)},${y(forecastR4)}`;
+  const gapEnd = EXP_BY_ROUND[3]-forecastR4;
+  const trend = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="روند امتیاز سازمان در چهار دور">
+    ${grid}${xl}
+    <polyline points="${exp}" fill="none" stroke="var(--faint)" stroke-width="1"/>
+    <polyline points="${fc}" fill="none" stroke="var(--chart-1)" stroke-width="2" stroke-dasharray="5 4"/>
+    <polyline points="${act}" fill="none" stroke="var(--chart-1)" stroke-width="2"/>
+    <circle cx="${x(1)}" cy="${y(orgScore)}" r="4" fill="var(--chart-1)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="${x(1)}" y="${y(orgScore)+22}" text-anchor="middle" style="fill:var(--text);font-weight:600" class="num">${fa(orgScore)}٪</text>
+    <text x="${x(3)-4}" y="${y(forecastR4)+4}" text-anchor="start" class="num" style="fill:var(--text)">${fa(forecastR4)}٪</text>
+    <text x="${x(3)-4}" y="${y(100)-6}" text-anchor="start" class="num">انتظار ${fa(100)}٪</text>
+  </svg>`;
+
+  const rows = units.slice().sort((a,b)=>gap(a)-gap(b)).map(u=>{
+    const s=status(u), g=gap(u);
+    return `<div class="ur" tabindex="0" role="row">
+      <div class="nm">${u.n}</div>
+      <div class="track" role="img" aria-label="پیشرفت ${F(u.score)} درصد، انتظار ${F(EXPECTED)} درصد"><i style="width:${u.score}%"></i><u style="inset-inline-start:${EXPECTED}%"></u></div>
+      <div class="r num" style="font-weight:600">${fa(u.score)}٪</div>
+      <div class="r ${g<0&&s!=='ok'?'neg':'mut'}">${sgn(g)}</div>
+      <div class="r num ${u.unreg?'':'mut'}">${fa(u.unreg)}<span class="mut"> / ${fa(u.krs)}</span></div>
+      <div class="r"><span class="pill ${s}">${stLabel[s]}</span></div>
+    </div>`;}).join('');
+
+  const need = [
+   ...units.filter(u=>u.unreg>=3||status(u)==='bad').slice(0,1).map(u=>({k:'h',n:'مدیر تولید',a:`${fa(u.unreg)} نتیجه کلیدی ثبت‌نشده`,s:`${u.n} · ${fa(Math.abs(gap(u)))} امتیاز عقب‌تر از انتظار`,b:'یادآوری'})),
+   {k:'s',n:'مدیر صادرات',a:'۲ نتیجه کلیدی ثبت‌نشده',s:'صادرات · مهلت ۲۵ آبان',b:'یادآوری'},
+   {k:'l',n:'مدیر منابع انسانی',a:'۲ نتیجه کلیدی ثبت‌نشده',s:'منابع انسانی · در خطر',b:'یادآوری'},
+   {k:'r',n:'سرپرست فروش داخلی',a:'۱ مقدار برای تأیید',s:'فروش داخلی · ارسال‌شده امروز ۰۹:۴۰',b:'بررسی'}
+  ];
+  const needHtml = need.map(n=>`<div class="rw">${av(n.k)}<div><p><b>${n.n}</b> — ${n.a}</p><small>${n.s}</small></div><button class="go" type="button">${n.b}</button></div>`).join('');
+  const comHtml = commitments.map(c=>`<div class="rw">${av(c.who)}<div><p><b>${c.from}</b> از ${c.to}: ${c.t}</p><small>مهلت ${c.due}${c.late?' · <span class="neg">عقب‌افتاده</span>':''}</small></div></div>`).join('');
+
+  return `<div class="page">
+   <div class="crumb">چرم مشهد / نمای سازمان</div>
+   <div class="title-row">
+    <div><h1>نمای سازمان</h1>
+     <p class="lede"><b>${worst.n}</b> ${fa(Math.abs(gap(worst)))} امتیاز از انتظار دور ۲ عقب‌تر است و ${fa(worst.unreg)} نتیجه‌کلیدی آن هنوز ثبت نشده.</p></div>
+    <div style="display:flex;gap:8px"><button class="btn">خروجی Excel</button><button class="btn pri" data-go="entry">پیگیری ثبت‌نشده‌ها (${fa(totalUnreg)})</button></div>
+   </div>
+   <div class="scope-row">
+    <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true">همه واحدها</button><button class="tab" role="tab" aria-selected="false">معاونت‌ها</button><button class="tab" role="tab" aria-selected="false">مدیریت‌ها</button></div>
+    <div class="range"><button class="btn">چرخه ۱۴۰۵ · دور ۲</button><button class="btn">مقایسه با دور ۱</button></div>
+   </div>
+   <div class="grid">
+    <div class="col">
+     <section class="card kpis" aria-label="شاخص‌های کلیدی">
+      <div class="kpi"><div class="l">امتیاز سازمان</div><div class="v num">${fa(orgScore)}<small>٪</small></div><div class="c">${sgn(orgScore-orgR1)} نسبت به دور ۱</div></div>
+      <div class="kpi"><div class="l">انتظار تا پایان دور ۲</div><div class="v num">${fa(EXPECTED)}<small>٪</small></div><div class="c">از ${fa(units.length)} واحد، ${fa(units.length-behind.length-atRisk.length)} روی مسیرند</div></div>
+      <div class="kpi"><div class="l">در خطر یا عقب</div><div class="v num">${fa(behind.length+atRisk.length)}<small>واحد</small></div><div class="c">${fa(behind.length)} عقب · ${fa(atRisk.length)} در خطر</div></div>
+      <div class="kpi"><div class="l">ثبت‌نشده</div><div class="v num">${fa(totalUnreg)}<small>از ${fa(totalKR)}</small></div><div class="c">${fa(DEADLINE_DAYS)} روز تا مهلت ۲۵ آبان</div></div>
+     </section>
+     <section class="card">
+      <div class="card-h"><div><h2>کدام واحدها از انتظار دور ۲ عقب‌اند؟</h2></div><div class="hl"><u></u>انتظار دور ۲: ${fa(EXPECTED)}٪</div></div>
+      <div class="ul" role="table">
+       <div class="uh" role="row"><div>واحد</div><div>پیشرفت</div><div class="r">امتیاز</div><div class="r">فاصله</div><div class="r">ثبت‌نشده</div><div class="r">وضعیت</div></div>
+       ${rows}
+      </div>
+     </section>
+     <section class="card">
+      <div class="card-h"><h2>روند امتیاز سازمان</h2><div class="lg"><span><s></s>واقعی</span><span><s class="d"></s>پیش‌بینی با روند فعلی</span><span><s class="g"></s>انتظار</span></div></div>
+      <div class="chart">${trend}</div>
+      <div class="tfoot"><span>با روند فعلی، پایان دور ۴ حدود ${fa(gapEnd)} امتیاز زیر انتظار می‌ماند.</span></div>
+     </section>
+    </div>
+    <aside class="rail" aria-label="نیاز به اقدام">
+     <h3>نیاز به اقدام</h3>
+     <div class="card"><div class="rl">${needHtml}</div><div class="foot"><button class="btn wide">دیدن همه ${fa(totalUnreg)} مورد</button></div></div>
+     <h3>تعهدات بین‌تیمی</h3>
+     <div class="card"><div class="rl">${comHtml}</div><div class="foot"><button class="btn wide">دیدن همه تعهدات</button></div></div>
+    </aside>
+   </div>
+  </div>`;
+}
+
+function entry(){
+  const regCount = salesKRs.length - salesUnreg;
+  let body='';
+  for(const o of salesObjectives){
+    body+=`<tr class="grp"><td colspan="7">${o.t}<span>${fa(o.krs.length)} نتیجه کلیدی</span></td></tr>`;
+    for(const k of o.krs){
+      const kk={...k,t:k.t2};
+      const p=pct(kk,k.v);
+      const st = p===null?'none':(p-EXPECTED>=-5?'ok':p-EXPECTED>=-12?'risk':'bad');
+      const changed = k.saved!==undefined && k.saved!==k.v;
+      const dir = k.type==='dec'?'کاهشی':k.type==='ms'?'مایلستون':'افزایشی';
+      body+=`<tr>
+       <td class="num mut" style="width:44px">${k.id}</td>
+       <td><div class="kr"><b>${k.t}</b><small>${dir} · از ${fa(k.b)} تا ${fa(k.t2)} ${k.u}</small></div></td>
+       <td><div class="who">${av(k.o)}<span>${people[k.o].n}</span></div></td>
+       <td class="r num mut">${fa(k.r1)}</td>
+       <td class="r"><span class="inwrap">${changed?'<i class="dot" title="تغییر کرده"></i>':''}<input class="in ${k.v===null?'empty':''} ${changed?'chg':''}" inputmode="decimal" value="${k.v===null?'':fa(k.v)}" placeholder="—" aria-label="مقدار دور ۲ برای ${k.t}"></span></td>
+       <td><div class="pc"><span class="num">${p===null?'<span class="mut">—</span>':fa(p)+'٪'}</span><div class="track"><i style="width:${p||0}%"></i><u style="inset-inline-start:${EXPECTED}%"></u></div></div></td>
+       <td class="r"><span class="pill ${st}">${stLabel[st]}</span></td>
+      </tr>`;
+    }
+  }
+  return `<div class="page">
+   <div class="crumb">چرم مشهد / ثبت دور مرور / فروش داخلی</div>
+   <div class="title-row">
+    <div><h1>ثبت دور ۲ — فروش داخلی</h1>
+     <p class="lede"><b>${fa(salesUnreg)} نتیجه کلیدی</b> هنوز ثبت نشده؛ مهلت ثبت ۲۵ آبان است (${fa(DEADLINE_DAYS)} روز دیگر).</p></div>
+    <div style="display:flex;gap:8px;align-items:center"><div class="autosave"><i></i>پیش‌نویس ذخیره شد · ۱۴:۲۲</div><button class="btn pri">ارسال ${fa(regCount)} مقدار برای تأیید</button></div>
+   </div>
+   <div class="scope-row">
+    <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true">همه (${fa(salesKRs.length)})</button><button class="tab" role="tab" aria-selected="false">ثبت‌نشده (${fa(salesUnreg)})</button><button class="tab" role="tab" aria-selected="false">من مسئولم</button></div>
+    <div class="range"><button class="btn">واحد: فروش داخلی</button><button class="btn">دور ۲ · ۱۴۰۵</button></div>
+   </div>
+   <section class="card kpis" style="margin-bottom:24px">
+    <div class="kpi"><div class="l">امتیاز واحد</div><div class="v num">${fa(salesScore)}<small>٪</small></div><div class="c">انتظار دور ۲: ${fa(EXPECTED)}٪</div></div>
+    <div class="kpi"><div class="l">ثبت‌شده</div><div class="v num">${fa(regCount)}<small>از ${fa(salesKRs.length)}</small></div><div class="c">${fa(salesUnreg)} مورد باقی‌مانده</div></div>
+    <div class="kpi"><div class="l">روی مسیر</div><div class="v num">${fa(salesKRs.filter(k=>{const p=pct(k,k.v);return p!==null&&p-EXPECTED>=-5}).length)}</div><div class="c">نتیجه کلیدی</div></div>
+    <div class="kpi"><div class="l">در خطر یا عقب</div><div class="v num">${fa(salesKRs.filter(k=>{const p=pct(k,k.v);return p!==null&&p-EXPECTED<-5}).length)}</div><div class="c">نتیجه کلیدی</div></div>
+   </section>
+   <section class="card" style="overflow:auto">
+    <table class="tbl"><thead><tr><th>#</th><th>نتیجه کلیدی</th><th>مسئول</th><th class="r">دور ۱</th><th class="r">مقدار دور ۲</th><th>پیشرفت (خط عمودی: انتظار)</th><th class="r">وضعیت</th></tr></thead><tbody>${body}</tbody></table>
+    <div class="tfoot"><span>${fa(salesKRs.length)} نتیجه کلیدی · مقدار خالی «ثبت‌نشده» است، نه صفر</span><span>نقطه آبی کنار مقدار یعنی با پیش‌نویس قبلی (${fa(12)}) فرق دارد</span></div>
+   </section>
+  </div>`;
+}
+
+const sheet = document.getElementById('sheet');
+function go(name){
+  sheet.innerHTML = name==='entry'?entry():overview();
+  document.querySelectorAll('.nav[data-go]').forEach(b=>b.setAttribute('aria-current',b.dataset.go===name?'page':'false'));
+  sheet.scrollTop=0;
+  document.title = name==='entry'?'OKR — ثبت دور مرور':'OKR — نمای سازمان';
+  bindTabs();
+}
+function bindTabs(){
+  sheet.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  sheet.querySelectorAll('.tabs').forEach(t=>t.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{t.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===b));}));
+}
+document.querySelectorAll('.nav[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.getElementById('ctMine').remove();
+document.getElementById('ctCom').textContent = fa(commitments.filter(c=>c.late).length);
+document.getElementById('theme').onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'};
+const q=new URLSearchParams(location.search); if(q.get('theme')==='dark')document.documentElement.dataset.theme='dark';
+go(q.get('screen')==='entry'?'entry':'overview');
+</script>
+</body>
+</html>

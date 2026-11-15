@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OKR — دقیق و رنگی (با فیلدهای واقعی اکسل)</title>
+<style>
+@font-face{font-family:Vazirmatn;font-weight:400;src:url(fonts/Vazirmatn-Regular.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:500;src:url(fonts/Vazirmatn-Medium.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:600;src:url(fonts/Vazirmatn-SemiBold.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:700;src:url(fonts/Vazirmatn-Bold.woff2) format("woff2");font-display:swap}
+:root{
+ --bg:#f7f8fb;--panel:#fff;--hover:#f1f3f9;--sel:#e9eeff;--line:#e6e9f1;--line2:#d3d8e6;
+ --tx:#161a2e;--mut:#5d6580;--faint:#646d88;--ac:#3b5bf0;--ac2:#8b5cf6;--acs:#3b5bf01f;
+ --ok:#12875a;--risk:#c26a06;--bad:#d03a45;--none:#646d88;--track:#e6e9f1;
+ --g0:#3b6cf0;--g1:#8b5cf6;--g2:#e5489b;--g3:#f08a24;--g4:#13a36b;--g5:#0aa5b8;
+ --font:Vazirmatn,Tahoma,sans-serif}
+:root[data-theme=dark]{
+ --bg:#0c0d14;--panel:#14161f;--hover:#1b1e2a;--sel:#1d2342;--line:#23263a;--line2:#343853;
+ --tx:#eceef8;--mut:#a0a6c0;--faint:#8c93af;--ac:#7f95ff;--ac2:#a98bff;--acs:#7f95ff26;
+ --ok:#4cd197;--risk:#f0a94e;--bad:#ff7d86;--none:#8c93af;--track:#2a2d44;
+ --g0:#7b9bff;--g1:#b095ff;--g2:#ff7bb8;--g3:#ffa85c;--g4:#4cd197;--g5:#4cd3e3}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:400 13.5px/1.75 var(--font);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer;background:none;border:0}
+a{color:inherit;text-decoration:none}svg{display:block}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-variant-numeric:tabular-nums}.mut{color:var(--mut)}.faint{color:var(--faint)}.tiny{font-size:12px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:6px}
+.kbd{display:inline-block;direction:ltr;font:500 11px/1 ui-monospace,Consolas,monospace;border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:3px 5px;color:var(--mut);background:var(--panel)}
+.ok{color:var(--ok)}.risk{color:var(--risk)}.bad{color:var(--bad)}.none{color:var(--none)}
+
+/* top bar */
+.bar{position:sticky;top:0;z-index:20;height:54px;display:flex;align-items:center;gap:6px;padding:0 20px;background:color-mix(in srgb,var(--panel) 85%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar::after{content:"";position:absolute;inset-inline:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--g0),var(--g1),var(--g2),var(--g3),var(--g4),var(--g5));opacity:.85}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;padding-inline-end:6px}
+.logo i{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--g0),var(--g1) 55%,var(--g2));color:#fff;display:grid;place-items:center;font-style:normal;font-size:11px}
+.ctx{display:flex;align-items:center;gap:8px;padding:5px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);font-weight:500}
+.ctx:hover{border-color:var(--line2)}
+.ctx .lv{width:7px;height:7px;border-radius:50%;background:var(--g4);position:relative}
+.ctx .lv::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--g4);animation:ping 2s infinite}
+@keyframes ping{from{transform:scale(.5);opacity:1}to{transform:scale(1.7);opacity:0}}
+.tabs{display:flex;gap:2px;margin-inline-start:10px}
+.tab{padding:5px 13px;border-radius:8px;color:var(--mut);font-weight:500;transition:.15s}
+.tab:hover{color:var(--tx);background:var(--hover)}
+.tab.on{color:var(--ac);background:var(--acs);font-weight:600}
+.sp{flex:1}
+.cmd{display:flex;align-items:center;gap:9px;min-width:230px;padding:6px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--faint)}
+.cmd:hover{border-color:var(--line2)}.cmd .kbd{margin-inline-start:auto}
+.ib{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--mut)}
+.ib:hover{background:var(--hover);color:var(--tx)}
+.av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--g2),var(--g3));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+
+.page{max-width:1120px;margin:0 auto;padding:28px 24px 100px}
+.screen{display:none}.screen.on{display:block;animation:in .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.crumb{display:flex;gap:7px;color:var(--faint);margin-bottom:16px;font-size:12.5px}.crumb b{color:var(--mut);font-weight:500}
+
+/* hero (tinted) */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:end;margin-bottom:34px;padding:28px 32px;border-radius:22px;border:1px solid var(--line);position:relative;overflow:hidden;
+ background:linear-gradient(115deg,color-mix(in srgb,var(--g0) 11%,var(--panel)),color-mix(in srgb,var(--g1) 9%,var(--panel)) 55%,color-mix(in srgb,var(--g2) 9%,var(--panel)))}
+.big{font-size:62px;font-weight:600;line-height:1.1;letter-spacing:-2px;color:var(--ac)}
+.big small{font-size:28px;letter-spacing:0}
+.delta{display:inline-flex;gap:6px;align-items:center;color:var(--ok);font-weight:600;margin-top:4px}
+.facts{display:flex;gap:22px;margin-top:16px;color:var(--mut);flex-wrap:wrap}
+.facts div{display:flex;gap:7px;align-items:center}.facts b{color:var(--tx);font-weight:700}
+.chart{height:150px}
+.chart .ln{stroke-dasharray:700;stroke-dashoffset:700;animation:draw 1.5s .2s cubic-bezier(.3,.7,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}.sec h2 span{color:var(--faint);font-weight:500}
+.seg{display:flex;background:var(--hover);border-radius:9px;padding:3px}
+.seg button{padding:3px 13px;border-radius:7px;color:var(--mut);font-weight:500;font-size:12.5px}
+.seg button.on{background:var(--panel);color:var(--ac);box-shadow:0 0 0 1px var(--line);font-weight:600}
+.grp{margin:20px 0 4px;display:flex;gap:8px;align-items:center;font-size:12px;font-weight:600;color:var(--mut);padding-inline:12px}
+.row{display:grid;grid-template-columns:34px minmax(150px,1.2fr) 1.4fr 110px 56px 56px;gap:14px;align-items:center;padding:8px 12px;border-radius:12px;cursor:pointer;transition:background .12s}
+.row:hover{background:var(--hover)}.row.sel{background:var(--sel)}
+.ut{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--u1),var(--u2))}
+.row .nm{font-weight:600}.row .why{color:var(--mut);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row .why.w{color:var(--risk);font-weight:500}
+.mb{height:5px;border-radius:5px;background:var(--track);overflow:hidden}
+.mb i{display:block;height:100%;width:0;border-radius:5px;background:currentColor;animation:fill 1s .15s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes fill{to{width:var(--w)}}
+.v{font-weight:700;text-align:end}.d{font-size:12px;font-weight:600;text-align:end}
+.glyph{display:grid;place-items:center}
+.mx{display:grid;grid-template-columns:170px repeat(4,1fr);gap:5px;margin-top:8px}
+.mx .h{font-size:12px;color:var(--faint);padding:4px 8px;font-weight:500;text-align:center}
+.mx .u{padding:7px 8px;font-weight:600;display:flex;gap:10px;align-items:center}
+.mx .c{padding:9px 0;text-align:center;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;transition:transform .12s}
+.mx .c:hover{transform:scale(1.06)}
+.mx .c.e{background:repeating-linear-gradient(135deg,transparent 0 5px,var(--hover) 5px 10px);color:var(--faint);font-weight:400;font-size:11.5px;border:1px dashed var(--line2)}
+/* goals */
+.gl{display:grid;gap:12px;margin-top:14px}
+.gr{display:grid;grid-template-columns:210px 1fr 54px 80px;gap:16px;align-items:center;padding:10px 12px;border-radius:12px}
+.gr:hover{background:var(--hover)}
+.gb{height:10px;border-radius:10px;background:var(--track);overflow:hidden}
+.gb i{display:block;height:100%;width:0;border-radius:10px;background:var(--c);animation:fill 1.1s .15s cubic-bezier(.2,.8,.2,1) forwards}
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:6px;padding:0 9px;border-radius:99px;font-size:11.5px;font-weight:600;line-height:21px;white-space:nowrap;background:color-mix(in srgb,var(--c) 13%,transparent);color:color-mix(in srgb,var(--c) 80%,var(--tx))}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+.team{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mut)}
+/* panel */
+.peek{position:fixed;top:54px;bottom:0;inset-inline-end:0;width:420px;background:var(--panel);border-inline-start:1px solid var(--line);box-shadow:0 0 40px rgba(20,24,60,.08);transform:translateX(-110%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility .3s;z-index:15;padding:22px;overflow:auto}
+.peek.on{transform:none;visibility:visible}
+.peek h3{font-size:17px;font-weight:600;line-height:1.7}
+.peek .x{position:absolute;top:14px;inset-inline-end:14px}
+.note{margin:14px 0;padding:12px 14px;border-radius:12px;background:var(--hover);color:var(--mut);line-height:1.9;font-size:12.5px}
+.kr{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.kr:last-child{border:0}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:6px 15px;border-radius:9px;font-weight:600;background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;transition:filter .15s,transform .15s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn.o{background:transparent;color:var(--tx);border:1px solid var(--line2)}.btn.o:hover{background:var(--hover);filter:none}
+/* meeting */
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.mh h1{font-size:24px;font-weight:600;line-height:1.5}
+.steps{display:flex;gap:5px;margin:16px 0 22px;flex-wrap:wrap;align-items:center}
+.steps span{padding:3px 13px;border-radius:99px;font-size:12.5px;color:var(--faint);border:1px solid var(--line)}
+.steps .dn{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,transparent);background:color-mix(in srgb,var(--ok) 9%,transparent)}
+.steps .cur{border-color:transparent;color:#fff;font-weight:600;background:linear-gradient(135deg,var(--ac),var(--ac2))}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.og{margin:22px 0 4px;padding:12px 14px;border-radius:14px;display:flex;gap:12px;align-items:center;background:color-mix(in srgb,var(--c) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--c) 22%,var(--line))}
+.og .no{font-size:11.5px;font-weight:700;color:var(--c);letter-spacing:.2px}
+.og b{font-weight:600}
+.og .sc{margin-inline-start:auto;display:flex;gap:8px;align-items:center;font-weight:700}
+.kh,.kr2{display:grid;grid-template-columns:42px minmax(220px,1fr) 104px 86px 76px minmax(150px,.7fr);gap:14px;align-items:center;padding:0 12px}
+.kh{font-size:11.5px;color:var(--faint);padding-block:8px;margin-top:6px}
+.kr2{padding-block:9px;border-radius:11px;cursor:pointer;transition:background .12s;border-bottom:1px solid transparent}
+.kr2:hover{background:var(--hover)}.kr2.sel{background:var(--sel)}
+.kr2 .t{font-weight:500;line-height:1.6}.kr2 .m{display:flex;gap:8px;align-items:center;margin-top:2px;flex-wrap:wrap}
+.inp{width:80px;text-align:center;font-weight:700;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--panel);transition:.15s}
+.inp:hover{border-color:var(--line2)}
+.inp:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px var(--acs)}
+.nt{width:100%;padding:4px 9px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--mut);font-size:12.5px;transition:.15s}
+.nt:hover{background:var(--hover)}.nt:focus{outline:0;background:var(--panel);border-color:var(--ac);color:var(--tx)}
+.pcell{display:flex;align-items:center;gap:8px;font-weight:700}
+.all{width:100%;border-collapse:separate;border-spacing:0 0;font-size:12.5px}
+.all th{font-size:11.5px;color:var(--faint);font-weight:600;padding:8px 8px;text-align:center;position:sticky;top:54px;background:var(--bg)}
+.all th.cur{color:var(--ac)}
+.all td{padding:8px;text-align:center;border-top:1px solid var(--line)}
+.all td.l{text-align:start;min-width:230px}
+.all td.f{background:repeating-linear-gradient(135deg,transparent 0 5px,var(--hover) 5px 10px)}
+.all .pp{font-size:11px;font-weight:700}
+.foot{position:fixed;bottom:16px;inset-inline:0;margin:auto;width:max-content;max-width:calc(100% - 32px);display:flex;gap:18px;align-items:center;padding:8px 16px;border-radius:13px;background:var(--panel);border:1px solid var(--line2);color:var(--mut);font-size:12.5px;box-shadow:0 8px 30px rgba(20,24,60,.1);z-index:10}
+.foot span{display:flex;gap:6px;align-items:center}.saved{color:var(--ok);font-weight:600}
+/* form */
+.f{display:grid;gap:5px;margin-top:12px}.f label{font-size:12px;color:var(--mut);font-weight:600}
+.f input,.f textarea,.f select{width:100%;padding:7px 11px;border-radius:9px;border:1px solid var(--line2);background:var(--bg);line-height:1.7}
+.f textarea{resize:vertical;min-height:64px}
+.f input:focus,.f textarea:focus,.f select:focus{outline:0;border-color:var(--ac);box-shadow:0 0 0 3px var(--acs);background:var(--panel)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rv{display:grid;grid-template-columns:34px 1fr 50px;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start}
+.rv:last-child{border:0}
+.rv .rn{font-weight:700;color:var(--ac);font-size:12px}
+/* palette */
+.ov{position:fixed;inset:0;background:rgba(12,14,30,.4);z-index:40;display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+.ov.on{display:flex;animation:in .2s both}
+.pal{width:min(600px,92vw);background:var(--panel);border:1px solid var(--line2);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden}
+.pal input{width:100%;border:0;background:none;padding:16px 18px;font-size:15px;border-bottom:1px solid var(--line);outline:0}
+.pal .g{padding:10px 18px 4px;font-size:11.5px;color:var(--faint);font-weight:600}
+.pal .it{display:flex;align-items:center;gap:12px;padding:9px 18px;cursor:pointer}.pal .it.on{background:var(--sel)}.pal .it .kbd{margin-inline-start:auto}
+.pal .ft{display:flex;gap:16px;padding:10px 18px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:20px;padding:20px}.row{grid-template-columns:34px 1fr 56px}.row .why,.row>.mbw,.row .d{display:none}.kh{display:none}.kr2{grid-template-columns:34px 1fr 80px}.kr2>.pcell,.kr2>.ntw{display:none}.gr{grid-template-columns:1fr 54px}.gr .gb{grid-column:1/-1;order:3}.cmd{min-width:0}.cmd span:not(.kbd){display:none}.tabs{display:none}.peek{width:100%}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.mb i,.gb i{width:var(--w)}.chart .ln{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<header class="bar">
+ <a class="logo" href="#"><i>O</i>OKR</a>
+ <button class="ctx" aria-label="تغییر چرخه"><span class="lv"></span>بهار ۱۴۰۵<span class="mut">· پایش ۲</span><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+ <nav class="tabs"><a class="tab on" data-go="dash" href="#">نمای کلی</a><a class="tab" data-go="meet" href="#">جلسه پایش</a><a class="tab" href="#">اهداف</a><a class="tab" href="#">گزارش‌ها</a></nav>
+ <div class="sp"></div>
+ <button class="cmd" id="open-pal"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>جستجو یا اجرای دستور…</span><span class="kbd">Ctrl K</span></button>
+ <button class="ib" id="theme" aria-label="تغییر تم"><svg class="i" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+ <div class="av">م</div>
+</header>
+<main class="page"><section class="screen on" id="dash"></section><section class="screen" id="meet"></section></main>
+<aside class="peek" id="peek" aria-label="جزئیات"></aside>
+<div class="foot" id="foot" style="display:none"><span><span class="kbd">J</span><span class="kbd">K</span> حرکت</span><span><span class="kbd">Enter</span> ویرایش مقدار</span><span><span class="kbd">Space</span> جزئیات KR</span><span class="saved" id="saved">ذخیره شد ✓</span></div>
+<div class="ov" id="ov"><div class="pal" role="dialog" aria-label="پالت فرمان"><input id="q" placeholder="به کجا بروم؟ یا چه کاری انجام دهم؟" autocomplete="off"><div id="res" style="max-height:340px;overflow:auto;padding-bottom:6px"></div><div class="ft"><span><span class="kbd">↑</span><span class="kbd">↓</span> انتخاب</span><span><span class="kbd">Enter</span> اجرا</span><span><span class="kbd">Esc</span> بستن</span></div></div></div>
+
+<script>
+const fa=n=>Number(n).toLocaleString('fa-IR',{useGrouping:false,maximumFractionDigits:1});
+const P=n=>fa(n)+'٪';
+const st=p=>p==null?'none':p>=70?'ok':p>=40?'risk':'bad';
+const stl={ok:'روی مسیر',risk:'در خطر',bad:'عقب',none:'ثبت نشده'};
+const en=s=>String(s).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫','.');
+const pie=(p,c,s=15)=>`<svg class="i ${c||st(p)}" style="width:${s}px;height:${s}px" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="var(--line2)" stroke-width="1.4"/>${p?`<circle cx="8" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="6.5" stroke-dasharray="${p/100*20.42} 20.42" transform="rotate(-90 8 8)"/>`:''}</svg>`;
+const calc=(b,g,v)=>{if(v===''||v==null||isNaN(v))return null;const p=g>b?(v-b)/(g-b):(b-v)/(b-g);return Math.round(Math.max(0,Math.min(1,p))*100)};
+const GOALS=[['تحول دیجیتال و هوشمندسازی سازمان','--g0'],['ارتقای سرمایه انسانی و برند کارفرمایی','--g1'],['ارتقا و تثبیت جایگاه برند','--g2'],['تحقق تارگت فروش ریالی و تعدادی','--g3'],['تحقق سودآوری پایدار سازمان','--g4'],['توسعه سبد محصول مبتنی بر نیاز مشتری','--g5']];
+const tag=g=>`<span class="tag" style="--c:var(${GOALS[g][1]})">${GOALS[g][0]}</span>`;
+const UC=[['#3b6cf0','#6d8cff'],['#8b5cf6','#b69cff'],['#e5489b','#ff8cc3'],['#f08a24','#ffbb6b'],['#13a36b','#52d6a0'],['#0aa5b8','#55d7e6']];
+const U=[
+ {n:'تولید',t:'معاونت',p1:55,p2:41,d:-14,k:22,w:'افت ۱۴٪ نسبت به پایش ۱ — ۱۳ KR نیازمند توجه',a:1},
+ {n:'مالی',t:'معاونت',p1:58,p2:null,d:0,k:13,w:'زمان جلسهٔ پایش ۲ تعیین نشده',a:1},
+ {n:'تدارکات',t:'مدیریت',p1:36,p2:47,d:11,k:12,w:'۳ KR ثبت‌نشده',a:1},
+ {n:'کنترل کیفیت',t:'مدیریت',p1:70,p2:83,d:13,k:11,w:'جلسه ۲۷ آبان · ۱۴:۰۰'},
+ {n:'فروش سازمانی',t:'مدیریت',p1:61,p2:74,d:13,k:14,w:'جلسه ۲۵ آبان · ۱۰:۳۰'},
+ {n:'فناوری اطلاعات',t:'مدیریت',p1:44,p2:68,d:24,k:15,w:'جلسه ۲۸ آبان · ۱۱:۰۰'},
+ {n:'منابع انسانی',t:'معاونت',p1:66,p2:71,d:5,k:10,w:'جلسه ۲۹ آبان · ۰۹:۳۰'},
+ {n:'کامرشیال',t:'مدیریت',p1:48,p2:52,d:4,k:9,w:'جلسه ۳۰ آبان · ۰۹:۰۰'}];
+const cur=u=>u.p2??u.p1;
+const ut=(i,s)=>`<div class="ut" style="--u1:${UC[i%6][0]};--u2:${UC[i%6][1]};${s?`width:${s}px;height:${s}px`:''}">${U[i].n[0]}</div>`;
+function chart(){const W=520,H=150,x=i=>W-14-i*(W-28)/4,y=v=>H-24-v*(H-44)/100;
+ const a=[0,31,62],e=[0,25,50,75,100];const path='M'+a.map((v,i)=>x(i)+','+y(v)).join(' L');const area=path+` L${x(2)},${y(0)} L${x(0)},${y(0)}Z`;
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="overflow:visible"><defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ac)" stop-opacity=".28"/><stop offset="1" stop-color="var(--ac)" stop-opacity="0"/></linearGradient><linearGradient id="gl" x1="1" x2="0"><stop offset="0" stop-color="var(--g0)"/><stop offset="1" stop-color="var(--g2)"/></linearGradient></defs>
+ ${[0,50,100].map(v=>`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`).join('')}
+ <path d="M${e.map((v,i)=>x(i)+','+y(v)).join(' L')}" fill="none" stroke="var(--line2)" stroke-width="1.5" stroke-dasharray="4 5"/>
+ <path d="${area}" fill="url(#ga)"/><path class="ln" d="${path}" fill="none" stroke="url(#gl)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+ ${a.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="${i==2?5:3.2}" fill="${i==2?'var(--g2)':'var(--panel)'}" stroke="${i==2?'var(--g2)':'var(--g0)'}" stroke-width="2"/>`).join('')}
+ ${['شروع','R1','R2','R3','نهایی'].map((l,i)=>`<text x="${x(i)}" y="${H-4}" font-size="11" text-anchor="middle" fill="${i<=2?'var(--mut)':'var(--faint)'}" style="font-family:var(--font)">${l}</text>`).join('')}
+ <text x="${x(2)}" y="${y(62)-13}" font-size="12.5" font-weight="700" text-anchor="middle" fill="var(--tx)" style="font-family:var(--font)">${fa(62)}</text></svg>`}
+const rowH=l=>l.map(u=>{const i=U.indexOf(u),p=cur(u),s=u.p2==null?'none':st(p);return `<div class="row" data-u="${i}" tabindex="0">${ut(i)}
+ <div><div class="nm">${u.n}</div><div class="faint tiny">${u.t} · ${fa(u.k)} KR</div></div><div class="why ${u.a?'w':''}">${u.w}</div>
+ <div class="mbw"><div class="mb ${s}" style="--w:${u.p2==null?0:p}%"><i></i></div></div><div class="v num">${u.p2==null?'—':P(p)}</div><div class="d num ${u.d<0?'bad':u.d>0?'ok':'faint'}">${u.p2==null?'':(u.d<0?'−':'+')+fa(Math.abs(u.d))}</div></div>`}).join('');
+function matrix(){const hc=p=>{const h=Math.round(p*1.2);return `background:hsl(${h} 70% 88%);color:hsl(${h} 70% 22%)`};
+ let h='<div class="mx"><div></div>'+['R1','R2','R3','نهایی'].map(x=>`<div class="h">${x}</div>`).join('');
+ U.forEach((u,i)=>{h+=`<div class="u">${ut(i,26)}${u.n}</div>`;[u.p1,u.p2].forEach(p=>h+=p==null?`<div class="c e">بدون جلسه</div>`:`<div class="c num" data-u="${i}" style="${hc(p)}">${fa(p)}</div>`);h+=`<div class="c e">هنوز نه</div><div class="c e">هنوز نه</div>`});return h+'</div>'}
+const GP=[72,48,40,66,58,52];
+function goalsV(){return `<div class="gl">${GOALS.map((g,i)=>`<div class="gr"><div>${tag(i)}</div><div class="gb" style="--c:var(${g[1]})"><i style="--w:${GP[i]}%"></i></div><b class="num" style="text-align:end">${P(GP[i])}</b><span class="faint tiny num">${fa([56,58,27,26,14,12][i])} KR</span></div>`).join('')}</div>`}
+function dash(){
+ document.getElementById('dash').innerHTML=`<div class="crumb"><b>سازمان</b> ‹ نمای کلی</div>
+ <div class="hero"><div><div class="mut">امتیاز سازمان</div><div class="big num">${fa(62)}<small>٪</small></div><div class="delta num">↑ ${P(15)} نسبت به R1</div>
+  <div class="facts"><div>${pie(80,'ok')}<b class="num">${fa(118)}</b> روی مسیر</div><div>${pie(45,'risk')}<b class="num">${fa(34)}</b> در خطر</div><div>${pie(0,'none')}<b class="num">${fa(12)}</b> ثبت‌نشده</div></div></div>
+  <div><div class="faint tiny" style="margin-bottom:6px">واقعی در برابر انتظار · جلسهٔ بعدی: فروش سازمانی، فردا ۱۰:۳۰</div>${chart()}</div></div>
+ <div class="sec"><h2>واحدها <span class="num">${fa(U.length)}</span></h2><div class="seg" id="vseg"><button class="on" data-v="list">فهرست</button><button data-v="mx">ماتریس</button><button data-v="g">هدف کسب‌وکاری</button></div></div><div id="units"></div>`;
+ const box=document.getElementById('units');
+ const bind=()=>box.querySelectorAll('[data-u]').forEach(r=>{r.onclick=()=>peekU(+r.dataset.u,r);r.onkeydown=e=>{if(e.key==='Enter')peekU(+r.dataset.u,r)}});
+ const list=()=>{box.innerHTML=`<div class="grp">${pie(30,'risk')} نیازمند توجه <span class="faint num">${fa(3)}</span></div>${rowH(U.filter(u=>u.a))}<div class="grp">${pie(85,'ok')} در مسیر <span class="faint num">${fa(5)}</span></div>${rowH(U.filter(u=>!u.a))}`;bind()};list();
+ document.querySelectorAll('#vseg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#vseg button').forEach(x=>x.classList.toggle('on',x===b));const v=b.dataset.v;v==='mx'?(box.innerHTML=matrix(),bind()):v==='g'?box.innerHTML=goalsV():list()})}
+function openPeek(h){const pk=document.getElementById('peek');pk.innerHTML=`<button class="ib x" aria-label="بستن" id="px"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`+h;pk.classList.add('on');document.getElementById('px').onclick=closePeek;return pk}
+function closePeek(){document.getElementById('peek').classList.remove('on');document.querySelectorAll('.row.sel,.kr2.sel').forEach(r=>r.classList.remove('sel'))}
+function peekU(i,el){const u=U[i],p=cur(u);document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'));el&&el.classList.add('sel');
+ const krs=[['افزایش فروش ماهانه',78,0],['کاهش زمان تحویل سفارش',55,3],['راه‌اندازی نمایندگی جدید',null,3],['رضایت مشتریان',91,2]];
+ const pk=openPeek(`<div style="display:flex;gap:12px;align-items:center">${ut(i,44)}<div><div class="faint tiny">${u.t}</div><h3>${u.n}</h3></div></div>
+ <div style="display:flex;gap:12px;align-items:baseline;margin-top:14px"><span class="num" style="font-size:40px;font-weight:600;letter-spacing:-1px">${u.p2==null?'—':P(p)}</span><span class="${st(u.p2==null?null:p)}" style="font-weight:700">${stl[st(u.p2==null?null:p)]}</span></div>
+ <div class="note"><b style="color:var(--tx)">چرا این عدد؟</b><br>${u.p2==null?'جلسهٔ پایش ۲ هنوز زمان‌بندی نشده؛ امتیاز آخرین پایش ('+P(u.p1)+') نمایش داده می‌شود.':`میانگین پیشرفت ${fa(u.k)} نتیجه کلیدی ${P(p)} است و نسبت به R1 ${u.d<0?'کاهش':'افزایش'} ${P(Math.abs(u.d))} داشته. ${u.a?u.w+'.':''}`}</div>
+ <div class="sec" style="margin-top:18px"><h2>نتایج کلیدی</h2></div>${krs.map(k=>`<div class="kr">${pie(k[1]||0,st(k[1]))}<span style="flex:1">${k[0]}<div style="margin-top:2px">${tag(k[2])}</div></span><b class="num ${st(k[1])}">${k[1]==null?'—':P(k[1])}</b></div>`).join('')}
+ <div style="display:flex;gap:8px;margin-top:20px"><button class="btn" id="gm">باز کردن صفحهٔ جلسه</button><button class="btn o">برنامه‌ریزی</button></div>`);pk.querySelector('#gm').onclick=()=>go('meet')}
+
+/* ─── meeting: real Excel fields ─── */
+const CURR=1; // R2
+const OBJ=[
+ {t:'ایجاد پشتیبانی IT قابل‌پیگیری، شفاف و قابل‌پیش‌بینی',krs:[
+  {id:'۱.۱',t:'راه‌اندازی سیستم تیکتینگ در فروشگاه‌ها و دفاتر',d:'به‌طوری‌که در ماه اول بیش از ۵۰٪ درخواست‌ها از طریق سیستم ثبت شود.',b:0,g:100,goal:0,team:'کل سازمان',exp:'حداقل ۸۰٪ درخواست‌های پشتیبانی دارای رکورد رسمی و قابل پیگیری باشد.',r:[[40,'راه‌اندازی در ۳ فروشگاه'],[70,'دفاتر مرکزی انجام شد'],[],[],[],[]]},
+  {id:'۱.۲',t:'رساندن شاخص رضایت کاربران (CSAT) به ۷۰',d:'سنجش ماهانه از طریق فرم کوتاه پس از بستن تیکت.',b:50,g:70,goal:1,team:'منابع انسانی',exp:'میانگین CSAT سه ماه آخر ≥ ۷۰.',r:[[54,''],[61,'فرم جدید فعال شد'],[],[],[],[]]},
+  {id:'۱.۳',t:'کاهش میانگین زمان رفع تیکت‌ها (ساعت)',d:'وضعیت موجود در آبان استخراج و نقطهٔ بهینه تعیین می‌شود.',b:48,g:24,goal:0,team:'—',exp:'۸۰٪ تیکت‌ها زیر ۲۴ ساعت بسته شود.',r:[[44,''],[36,'اولویت‌بندی بر اساس SLA'],[],[],[],[]]}]},
+ {t:'اطمینان از قابلیت واقعی Backup و Restore',krs:[
+  {id:'۲.۱',t:'اجرای موفق مانور بازیابی ۱۱ سیستم اصلی',d:'سیستم‌های کاندید: کال‌سنتر، BI، اتوماسیون، آنتی‌ویروس و …',b:0,g:11,goal:0,team:'سرپرست زیرساخت و شبکه',exp:'۶ گزارش ماهانه Veeam با نرخ موفقیت ≥ ۹۵٪.',r:[[2,'دو سیستم تست شد'],[5,''],[],[],[],[]]},
+  {id:'۲.۲',t:'بررسی و گزارش ماهانهٔ سلامت پشتیبان‌گیری',d:'',b:0,g:6,goal:0,team:'—',exp:'ارسال گزارش تا روز پنجم هر ماه.',r:[[1,''],[2,''],[],[],[],[]]}]},
+ {t:'ایجاد شفافیت و کنترل بر دارایی‌های IT سازمان',krs:[
+  {id:'۳.۱',t:'تهیهٔ بانک اطلاعاتی دارایی‌های IT',d:'شامل سرورها، کلاینت‌ها، پرینترها و تجهیزات شبکه.',b:0,g:100,goal:1,team:'مالی',exp:'۱۰۰٪ دارایی‌ها با برچسب و مسئول ثبت شوند.',r:[[20,'جمع‌آوری اولیه'],[],[],[],[],[]]}]}];
+const ALLK=OBJ.flatMap(o=>o.krs);const objSc=o=>Math.round(o.krs.reduce((s,k)=>s+(calc(k.b,k.g,k.r[CURR][0])||0),0)/o.krs.length);
+const gcol=g=>`var(${GOALS[g][1]})`;
+function meet(view='cur'){
+ let body='';
+ if(view==='cur'){OBJ.forEach((o,oi)=>{const sc=objSc(o);body+=`<div class="og" style="--c:var(--g${oi%6})"><span class="no">هدف ${fa(oi+1)}</span><b>${o.t}</b><span class="sc">${pie(sc,st(sc),17)}<span class="num ${st(sc)}">${P(sc)}</span></span></div>
+ <div class="kh"><span>#</span><span>نتیجه کلیدی</span><span>مبنا ← هدف</span><span>میزان پیشرفت</span><span>درصد</span><span>توضیحات R${fa(CURR+1)}</span></div>`;
+ o.krs.forEach(k=>{const v=k.r[CURR][0],p=calc(k.b,k.g,v);body+=`<div class="kr2" data-k="${ALLK.indexOf(k)}" tabindex="0"><span class="num faint">${k.id}</span>
+ <div><div class="t">${k.t}</div><div class="m">${tag(k.goal)}${k.team!=='—'?`<span class="team"><svg class="i" style="width:12px;height:12px" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/></svg>${k.team}</span>`:''}</div></div>
+ <span class="num mut" style="white-space:nowrap">${fa(k.b)} ← <b style="color:var(--tx)">${fa(k.g)}</b></span>
+ <input class="inp num" aria-label="میزان پیشرفت ${k.t}" value="${v==null?'':fa(v)}" placeholder="—">
+ <span class="pcell"><span class="pg">${pie(p||0,st(p))}</span><span class="num pv ${st(p)}">${p==null?'—':P(p)}</span></span>
+ <span class="ntw"><input class="nt" aria-label="توضیحات" value="${k.r[CURR][1]||''}" placeholder="توضیح…"></span></div>`})});}
+ else{body=`<table class="all"><thead><tr><th style="text-align:start">نتیجه کلیدی</th><th>مبنا</th><th>هدف</th>${[1,2,3,4,5,6].map(i=>`<th class="${i-1===CURR?'cur':''}">R${fa(i)}</th>`).join('')}<th>نهایی</th></tr></thead><tbody>${ALLK.map(k=>`<tr><td class="l"><span class="num faint">${k.id}</span> ${k.t}<div style="margin-top:3px">${tag(k.goal)}</div></td><td class="num mut">${fa(k.b)}</td><td class="num"><b>${fa(k.g)}</b></td>${k.r.map((r,i)=>{if(r[0]==null)return `<td class="f"></td>`;const p=calc(k.b,k.g,r[0]);return `<td><div class="num" style="font-weight:700">${fa(r[0])}</div><div class="pp num ${st(p)}">${P(p)}</div></td>`}).join('')}<td class="f"></td></tr>`).join('')}</tbody></table>`}
+ document.getElementById('meet').innerHTML=`<div class="crumb"><b>فناوری اطلاعات</b> ‹ جلسهٔ پایش ۲</div>
+ <div class="mh"><div><h1>پایش ۲ · فناوری اطلاعات</h1><div class="mut" style="margin-top:2px">۲۸ آبان ۱۴۰۵، ساعت ۱۱:۰۰ · اتاق شورا</div></div><div style="display:flex;gap:8px"><button class="btn o">Excel</button><button class="btn" id="newkr">+ KR جدید</button></div></div>
+ <div class="steps"><span class="dn">شروع ✓</span><span class="dn">R1 ✓</span><span class="cur">R2 · جاری</span><span>R3</span><span>R4</span><span>R5</span><span>R6</span><span>نهایی</span></div>
+ <div class="toolbar"><div class="seg" id="mseg"><button data-m="cur" class="${view==='cur'?'on':''}">پایش جاری</button><button data-m="all" class="${view==='all'?'on':''}">همهٔ پایش‌ها</button></div><span class="faint tiny">${fa(ALLK.length)} نتیجه کلیدی در ${fa(OBJ.length)} هدف · نسخهٔ تعریف: ۲ (اصلاح در جلسهٔ شروع)</span></div>${body}`;
+ document.querySelectorAll('#mseg button').forEach(b=>b.onclick=()=>meet(b.dataset.m));
+ document.getElementById('newkr').onclick=()=>krForm(null);
+ if(view!=='cur'){document.getElementById('foot').style.display='none';return}
+ document.getElementById('foot').style.display=document.getElementById('meet').classList.contains('on')?'flex':'none';
+ const rows=[...document.querySelectorAll('.kr2')];let idx=-1,tm;
+ const save=()=>{const s=document.getElementById('saved');s.textContent='در حال ذخیره…';clearTimeout(tm);tm=setTimeout(()=>s.textContent='ذخیره شد ✓',500)};
+ const sel=i=>{idx=Math.max(0,Math.min(rows.length-1,i));rows.forEach((x,j)=>x.classList.toggle('sel',j===idx))};
+ rows.forEach((tr,i)=>{const k=ALLK[+tr.dataset.k];const inp=tr.querySelector('.inp');
+  inp.addEventListener('input',()=>{const raw=en(inp.value);const v=raw===''?null:parseFloat(raw);k.r[CURR][0]=isNaN(v)?null:v;const p=calc(k.b,k.g,k.r[CURR][0]);tr.querySelector('.pv').textContent=p==null?'—':P(p);tr.querySelector('.pv').className='num pv '+st(p);tr.querySelector('.pg').innerHTML=pie(p||0,st(p));save()});
+  tr.querySelector('.nt').addEventListener('input',e=>{k.r[CURR][1]=e.target.value;save()});
+  tr.addEventListener('click',e=>{sel(i);if(e.target.tagName!=='INPUT')krForm(k,tr)});inp.addEventListener('focus',e=>{e.target.select();sel(i)})});
+ window.__rows={rows,sel,get idx(){return idx}}}
+function krForm(k,el){document.querySelectorAll('.kr2.sel').forEach(r=>r.classList.remove('sel'));el&&el.classList.add('sel');
+ const n=!k;k=k||{id:'۴.۱',t:'',d:'',b:'',g:'',goal:0,team:'',exp:'',r:[[],[],[],[],[],[]]};
+ const pk=openPeek(`<div class="faint tiny">${n?'نتیجهٔ کلیدی جدید':'نتیجهٔ کلیدی '+k.id}</div><h3>${n?'تعریف KR':k.t}</h3>${n?'':`<div style="margin-top:4px"><span class="tag" style="--c:var(--ac)">نسخهٔ ۲ · اصلاح در جلسهٔ شروع</span></div>`}
+ <div class="f"><label>عنوان</label><input value="${k.t}" placeholder="مثلاً: کاهش میانگین زمان رفع تیکت‌ها"></div>
+ <div class="f"><label>توضیحات</label><textarea>${k.d}</textarea></div>
+ <div class="two"><div class="f"><label>خط مبنا</label><input class="num" value="${k.b===''?'':fa(k.b)}"></div><div class="f"><label>هدف</label><input class="num" id="tg" value="${k.g===''?'':fa(k.g)}"></div></div>
+ <div class="f" id="why" style="display:none"><label>دلیل تغییر هدف (الزامی)</label><input placeholder="چرا هدف تغییر کرد؟"></div>
+ <div class="f"><label>هدف کسب‌وکاری</label><select id="gs">${GOALS.map((g,i)=>`<option value="${i}" ${i===k.goal?'selected':''}>${g[0]}</option>`).join('')}</select></div>
+ <div class="two"><div class="f"><label>تیم‌های همکار</label><input value="${k.team==='—'?'':k.team}" placeholder="مثلاً: مالی، CRM"></div><div class="f"><label>مسئول KR</label><input value="${n?'':'سرپرست زیرساخت'}" placeholder="انتخاب کاربر"></div></div>
+ <div class="f"><label>شرح انتظار</label><textarea>${k.exp}</textarea></div>
+ ${n?'':`<div class="sec" style="margin-top:20px"><h2>پیشرفت در پایش‌ها</h2></div>${k.r.map((r,i)=>r[0]==null?'':`<div class="rv"><span class="rn">R${fa(i+1)}</span><div><b class="num">${fa(r[0])}</b>${r[1]?`<div class="mut tiny">${r[1]}</div>`:''}</div><b class="num ${st(calc(k.b,k.g,r[0]))}">${P(calc(k.b,k.g,r[0]))}</b></div>`).join('')}`}
+ <div style="display:flex;gap:8px;margin-top:20px"><button class="btn" id="sv">ذخیره</button><button class="btn o" id="cn">انصراف</button></div>`);
+ pk.querySelector('#tg').addEventListener('input',()=>{pk.querySelector('#why').style.display=!n?'grid':'none'});
+ pk.querySelector('#cn').onclick=closePeek;pk.querySelector('#sv').onclick=closePeek}
+function go(s){document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('on',x.id===s));document.querySelectorAll('.tab[data-go]').forEach(t=>t.classList.toggle('on',t.dataset.go===s));document.getElementById('foot').style.display=s==='meet'&&document.querySelector('.kr2')?'flex':'none';closePeek();window.scrollTo(0,0)}
+document.querySelectorAll('.tab[data-go]').forEach(t=>t.onclick=e=>{e.preventDefault();go(t.dataset.go)});
+/* palette */
+const CMDS=[['برو به',[['نمای کلی سازمان','G D',()=>go('dash')],['جلسهٔ پایش ۲ · فناوری اطلاعات','G M',()=>go('meet')],['اهداف','G O'],['گزارش‌ها','G R'],['همترازی','G A'],['تعهدات','G C']]],['اقدام',[['تعریف KR جدید…','N',()=>{go('meet');krForm(null)}],['ثبت مقدار برای KR…','V'],['برنامه‌ریزی جلسهٔ مالی','S'],['خروجی Excel با چیدمان فعلی','E'],['تغییر تم روشن/تیره','T',()=>toggleTheme()]]],['واحدها',U.slice(0,4).map((u,i)=>['باز کردن '+u.n,'',()=>{go('dash');setTimeout(()=>peekU(i),60)}])]];
+let pi=0,flat=[];
+function pal(q=''){flat=[];let h='';CMDS.forEach(([g,it])=>{const m=it.filter(i=>i[0].includes(q));if(!m.length)return;h+=`<div class="g">${g}</div>`;m.forEach(i=>{h+=`<div class="it ${flat.length===pi?'on':''}" data-i="${flat.length}"><span>${i[0]}</span>${i[1]?`<span class="kbd">${i[1]}</span>`:''}</div>`;flat.push(i)})});document.getElementById('res').innerHTML=h||'<div class="it mut">نتیجه‌ای نیست</div>';document.querySelectorAll('#res .it[data-i]').forEach(e=>e.onclick=()=>run(+e.dataset.i))}
+const run=i=>{const f=flat[i];closePal();f&&f[2]&&f[2]()};
+function openPal(){pi=0;document.getElementById('ov').classList.add('on');const q=document.getElementById('q');q.value='';pal();q.focus()}
+function closePal(){document.getElementById('ov').classList.remove('on')}
+document.getElementById('open-pal').onclick=openPal;document.getElementById('ov').onclick=e=>{if(e.target.id==='ov')closePal()};
+document.getElementById('q').oninput=e=>{pi=0;pal(e.target.value)};
+document.addEventListener('keydown',e=>{
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openPal();return}
+ if(document.getElementById('ov').classList.contains('on')){if(e.key==='Escape')closePal();else if(e.key==='ArrowDown'){pi=Math.min(flat.length-1,pi+1);pal(document.getElementById('q').value);e.preventDefault()}else if(e.key==='ArrowUp'){pi=Math.max(0,pi-1);pal(document.getElementById('q').value);e.preventDefault()}else if(e.key==='Enter')run(pi);return}
+ const t=document.activeElement.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'){if(e.key==='Escape'||(e.key==='Enter'&&t==='INPUT'&&document.activeElement.classList.contains('inp'))){document.activeElement.blur();e.preventDefault()}return}
+ if(e.key==='Escape'){closePeek();return}
+ if(!document.getElementById('meet').classList.contains('on')||!window.__rows)return;const R=window.__rows;
+ if(e.key==='j'||e.key==='ArrowDown'){R.sel(R.idx+1);e.preventDefault()}else if(e.key==='k'||e.key==='ArrowUp'){R.sel(R.idx-1);e.preventDefault()}
+ else if(e.key==='Enter'&&R.idx>=0){R.rows[R.idx].querySelector('.inp').focus();e.preventDefault()}
+ else if(e.key===' '&&R.idx>=0){krForm(ALLK[+R.rows[R.idx].dataset.k],R.rows[R.idx]);e.preventDefault()}});
+function toggleTheme(){const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'':'dark'}
+document.getElementById('theme').onclick=toggleTheme;
+dash();meet();
+const q=new URLSearchParams(location.search);
+if(q.get('s')==='meet')go('meet');if(q.get('m')==='all')meet('all');if(q.get('theme')==='dark')toggleTheme();
+if(q.get('v')){const b=document.querySelector(`#vseg [data-v=${q.get('v')}]`);b&&b.click()}
+if(q.get('peek')!==null)peekU(+q.get('peek'));if(q.get('kr')!==null){go('meet');krForm(ALLK[+q.get('kr')])}if(q.get('pal')!==null)openPal();
+</script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Secrets and local config (keep the .example files)
+.env
+.env.*
+!.env.example
+
+# Backups and dumps
+*.dump
+*.sql.gz
+backups/
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Design-tool caches
+.taste-skill/
+**/.impeccable/hook.cache.json
+
+# Logs
+*.log
+logs/

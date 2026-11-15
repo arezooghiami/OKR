@@ -1,0 +1,48 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "C:/Users/ghiami/Desktop/OKR_project/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--app-dir",
+        "backend",
+        "--port",
+        "8010"
+      ],
+      "port": 8010
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "api-preview",
+      "runtimeExecutable": "C:/Program Files/Git/bin/bash.exe",
+      "runtimeArgs": [
+        "-c",
+        "OKR_DATABASE_URL=postgresql+psycopg://okr:okr_dev_password@localhost:5433/okr_pm_demo .venv/Scripts/python.exe -m uvicorn app.main:app --app-dir backend --port 8011"
+      ],
+      "port": 8011
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "C:/Program Files/Git/bin/bash.exe",
+      "runtimeArgs": [
+        "-c",
+        "OKR_API_URL=http://localhost:8011 npm --prefix frontend run dev -- --port 5176 --strictPort"
+      ],
+      "port": 5176
+    }
+  ]
+}

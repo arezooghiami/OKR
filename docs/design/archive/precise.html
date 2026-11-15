@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OKR — نسخهٔ دقیق و ابزارگونه</title>
+<style>
+@font-face{font-family:Vazirmatn;font-weight:400;src:url(fonts/Vazirmatn-Regular.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:500;src:url(fonts/Vazirmatn-Medium.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:600;src:url(fonts/Vazirmatn-SemiBold.woff2) format("woff2");font-display:swap}
+@font-face{font-family:Vazirmatn;font-weight:700;src:url(fonts/Vazirmatn-Bold.woff2) format("woff2");font-display:swap}
+:root{
+ --bg:#fbfbfa;--panel:#fff;--hover:#f4f4f2;--sel:#eef1fe;--line:#e8e8e5;--line2:#d9d9d4;
+ --tx:#191917;--mut:#6b6b66;--faint:#74746d;--ac:#2f4fd8;--acs:#2f4fd81a;
+ --ok:#1a7f55;--risk:#b4690e;--bad:#c2362f;--none:#74746d;--track:#e8e8e5;
+ --font:Vazirmatn,Tahoma,sans-serif}
+:root[data-theme=dark]{
+ --bg:#0e0e0f;--panel:#151517;--hover:#1c1c1f;--sel:#1b2038;--line:#242427;--line2:#34343a;
+ --tx:#ededeb;--mut:#9a9aa2;--faint:#8d8d96;--ac:#7b92ff;--acs:#7b92ff24;
+ --ok:#4cc58d;--risk:#e2a04a;--bad:#ef7770;--none:#8d8d96;--track:#2a2a2f}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:400 13.5px/1.75 var(--font);-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}button{cursor:pointer;background:none;border:0}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-variant-numeric:tabular-nums}
+.mut{color:var(--mut)}.faint{color:var(--faint)}.tiny{font-size:12px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:6px}
+.kbd{display:inline-block;direction:ltr;font:500 11px/1 ui-monospace,Consolas,monospace;border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:3px 5px;color:var(--mut);background:var(--panel)}
+
+/* ── top bar ── */
+.bar{position:sticky;top:0;z-index:20;height:52px;display:flex;align-items:center;gap:6px;padding:0 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;padding-inline-end:6px}
+.logo i{width:22px;height:22px;border-radius:6px;background:var(--tx);color:var(--bg);display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700}
+.ctx{display:flex;align-items:center;gap:8px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-weight:500;transition:border-color .15s}
+.ctx:hover{border-color:var(--line2)}
+.ctx .live{width:6px;height:6px;border-radius:50%;background:var(--ac);position:relative}
+.ctx .live::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--ac);animation:ping 2s infinite}
+@keyframes ping{from{transform:scale(.5);opacity:1}to{transform:scale(1.6);opacity:0}}
+.tabs{display:flex;gap:2px;margin-inline-start:10px}
+.tab{padding:5px 12px;border-radius:7px;color:var(--mut);font-weight:500;transition:.15s}
+.tab:hover{color:var(--tx);background:var(--hover)}
+.tab.on{color:var(--tx);background:var(--hover)}
+.sp{flex:1}
+.cmd{display:flex;align-items:center;gap:9px;min-width:230px;padding:6px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--faint);transition:border-color .15s}
+.cmd:hover{border-color:var(--line2)}
+.cmd .kbd{margin-inline-start:auto}
+.ib{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--mut)}
+.ib:hover{background:var(--hover);color:var(--tx)}
+.av{width:26px;height:26px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:600}
+
+/* ── page ── */
+.page{max-width:1040px;margin:0 auto;padding:32px 24px 90px}
+.screen{display:none}.screen.on{display:block;animation:in .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.crumb{display:flex;align-items:center;gap:7px;color:var(--faint);margin-bottom:22px;font-size:12.5px}
+.crumb b{color:var(--mut);font-weight:500}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:48px;align-items:end;margin-bottom:40px}
+.big{font-size:60px;font-weight:500;line-height:1.1;letter-spacing:-2px}
+.big small{font-size:28px;color:var(--faint);letter-spacing:0;margin-inline-start:2px}
+.delta{display:inline-flex;gap:6px;align-items:center;color:var(--ok);font-weight:600;margin-top:6px}
+.facts{display:flex;gap:26px;margin-top:16px;color:var(--mut)}
+.facts div{display:flex;gap:7px;align-items:center}
+.facts b{color:var(--tx);font-weight:600}
+.chart{height:150px}
+.chart .ln{stroke-dasharray:700;stroke-dashoffset:700;animation:draw 1.5s .2s cubic-bezier(.3,.7,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}
+.sec h2 span{color:var(--faint);font-weight:500}
+.seg{display:flex;background:var(--hover);border-radius:8px;padding:2px}
+.seg button{padding:3px 12px;border-radius:6px;color:var(--mut);font-weight:500;font-size:12.5px}
+.seg button.on{background:var(--panel);color:var(--tx);box-shadow:0 0 0 1px var(--line)}
+.grp{margin:22px 0 4px;display:flex;gap:8px;align-items:center;font-size:12px;font-weight:600;color:var(--mut);padding-inline:12px}
+.row{display:grid;grid-template-columns:20px minmax(150px,1.3fr) 1.4fr 110px 56px 70px;gap:14px;align-items:center;padding:9px 12px;border-radius:9px;cursor:pointer;position:relative;transition:background .12s}
+.row:hover{background:var(--hover)}
+.row.sel{background:var(--sel)}
+.row .nm{font-weight:500}
+.row .why{color:var(--mut);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .why.w{color:var(--risk)}
+.mb{height:4px;border-radius:4px;background:var(--track);overflow:hidden}
+.mb i{display:block;height:100%;width:0;border-radius:4px;background:currentColor;animation:fill 1s .15s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes fill{to{width:var(--w)}}
+.v{font-weight:600;text-align:end}
+.d{font-size:12px;font-weight:600;text-align:end}
+.glyph{display:grid;place-items:center}
+.ok{color:var(--ok)}.risk{color:var(--risk)}.bad{color:var(--bad)}.none{color:var(--none)}
+/* matrix */
+.mx{display:grid;grid-template-columns:150px repeat(4,1fr);gap:4px;margin-top:8px}
+.mx .h{font-size:12px;color:var(--faint);padding:4px 8px;font-weight:500}
+.mx .u{padding:9px 8px;font-weight:500;border-radius:8px}
+.mx .c{padding:9px 0;text-align:center;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;transition:transform .12s}
+.mx .c:hover{transform:scale(1.05)}
+.mx .c.e{background:repeating-linear-gradient(135deg,transparent 0 5px,var(--hover) 5px 10px);color:var(--faint);font-weight:400;font-size:11.5px;border:1px dashed var(--line2)}
+/* peek panel */
+.peek{position:fixed;top:52px;bottom:0;inset-inline-end:0;width:380px;background:var(--panel);border-inline-start:1px solid var(--line);box-shadow:0 0 40px rgba(0,0,0,.06);transform:translateX(-110%);visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:15;padding:22px;overflow:auto}
+.peek.on{transform:none;visibility:visible}
+.peek h3{font-size:17px;font-weight:600}
+.peek .x{position:absolute;top:14px;inset-inline-end:14px}
+.kr{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.kr:last-child{border:0}
+.note{margin:16px 0;padding:12px 14px;border-radius:10px;background:var(--hover);color:var(--mut);line-height:1.9;font-size:12.5px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:8px;font-weight:600;background:var(--tx);color:var(--bg);transition:opacity .15s}
+.btn:hover{opacity:.88}
+.btn.o{background:transparent;color:var(--tx);border:1px solid var(--line2)}
+.btn.o:hover{background:var(--hover);opacity:1}
+/* meeting */
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:6px}
+.mh h1{font-size:24px;font-weight:600;line-height:1.5}
+.steps{display:flex;gap:4px;margin:18px 0 30px}
+.steps span{padding:3px 12px;border-radius:99px;font-size:12.5px;color:var(--faint);border:1px solid transparent}
+.steps .dn{color:var(--mut)}
+.steps .cur{border-color:var(--line2);color:var(--tx);font-weight:600;background:var(--panel)}
+.og{margin:26px 0 4px;font-weight:600;display:flex;gap:10px;align-items:baseline}
+.kr2{display:grid;grid-template-columns:34px 1fr 120px 96px 120px 90px;gap:14px;align-items:center;padding:10px 12px;border-radius:9px;transition:background .12s;cursor:pointer}
+.kr2:hover{background:var(--hover)}.kr2.sel{background:var(--sel)}
+.kr2 .t{font-weight:500}
+.inp{width:88px;text-align:center;font-weight:600;padding:4px 6px;border-radius:7px;border:1px solid transparent;background:var(--hover);transition:.15s}
+.inp:hover{border-color:var(--line2)}
+.inp:focus{outline:0;border-color:var(--ac);background:var(--panel);box-shadow:0 0 0 3px var(--acs)}
+.pcell{display:flex;align-items:center;gap:9px;font-weight:600}
+.foot{position:fixed;bottom:16px;inset-inline:0;margin:auto;width:max-content;max-width:calc(100% - 32px);display:flex;gap:18px;align-items:center;padding:8px 16px;border-radius:12px;background:var(--panel);border:1px solid var(--line2);color:var(--mut);font-size:12.5px;box-shadow:0 8px 30px rgba(0,0,0,.08);z-index:10}
+.foot span{display:flex;gap:6px;align-items:center}
+.saved{color:var(--ok);font-weight:500}
+/* palette */
+.ov{position:fixed;inset:0;background:rgba(10,10,10,.35);z-index:40;display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+.ov.on{display:flex;animation:in .2s both}
+.pal{width:min(600px,92vw);background:var(--panel);border:1px solid var(--line2);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden}
+.pal input{width:100%;border:0;background:none;padding:16px 18px;font-size:15px;border-bottom:1px solid var(--line);outline:0}
+.pal .g{padding:10px 18px 4px;font-size:11.5px;color:var(--faint);font-weight:600}
+.pal .it{display:flex;align-items:center;gap:12px;padding:9px 18px;cursor:pointer}
+.pal .it.on{background:var(--sel)}
+.pal .it .kbd{margin-inline-start:auto}
+.pal .ft{display:flex;gap:16px;padding:10px 18px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+@media(max-width:860px){.hero{grid-template-columns:1fr;gap:20px}.row{grid-template-columns:20px 1fr 90px 56px}.row .why,.row .d,.row>.mbw{display:none}.kr2{grid-template-columns:34px 1fr 90px 80px}.kr2 .bl,.kr2 .st{display:none}.cmd{min-width:0}.cmd span:not(.kbd){display:none}.tabs{display:none}.peek{width:100%}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.mb i{width:var(--w)}.chart .ln{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<header class="bar">
+ <a class="logo" href="#"><i>O</i>OKR</a>
+ <button class="ctx" aria-label="تغییر چرخه"><span class="live"></span>بهار ۱۴۰۵<span class="mut">· پایش ۲</span><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+ <nav class="tabs"><a class="tab on" data-go="dash" href="#">نمای کلی</a><a class="tab" data-go="meet" href="#">جلسه پایش</a><a class="tab" href="#">اهداف</a><a class="tab" href="#">گزارش‌ها</a></nav>
+ <div class="sp"></div>
+ <button class="cmd" id="open-pal"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><span>جستجو یا اجرای دستور…</span><span class="kbd">Ctrl K</span></button>
+ <button class="ib" id="theme" aria-label="تغییر تم"><svg class="i" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+ <div class="av">م</div>
+</header>
+
+<main class="page">
+<section class="screen on" id="dash"></section>
+<section class="screen" id="meet"></section>
+</main>
+
+<aside class="peek" id="peek" aria-label="جزئیات واحد"></aside>
+<div class="foot" id="foot" style="display:none"><span><span class="kbd">J</span><span class="kbd">K</span> حرکت</span><span><span class="kbd">Enter</span> ویرایش مقدار</span><span><span class="kbd">C</span> کامنت</span><span class="saved" id="saved">ذخیره شد ✓</span></div>
+<div class="ov" id="ov"><div class="pal" role="dialog" aria-label="پالت فرمان"><input id="q" placeholder="به کجا بروم؟ یا چه کاری انجام دهم؟" autocomplete="off"><div id="res" style="max-height:340px;overflow:auto;padding-bottom:6px"></div><div class="ft"><span><span class="kbd">↑</span><span class="kbd">↓</span> انتخاب</span><span><span class="kbd">Enter</span> اجرا</span><span><span class="kbd">Esc</span> بستن</span></div></div></div>
+
+<script>
+const fa=n=>Number(n).toLocaleString('fa-IR',{useGrouping:false,maximumFractionDigits:1});
+const P=n=>fa(n)+'٪';
+const st=p=>p==null?'none':p>=70?'ok':p>=40?'risk':'bad';
+const stl={ok:'روی مسیر',risk:'در خطر',bad:'عقب',none:'ثبت نشده'};
+const pie=(p,c)=>`<svg class="i ${c||st(p)}" style="width:15px;height:15px" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="var(--line2)" stroke-width="1.4"/>${p?`<circle cx="8" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="6.5" stroke-dasharray="${p/100*20.42} 20.42" transform="rotate(-90 8 8)"/>`:''}</svg>`;
+const U=[
+ {n:'تولید',t:'معاونت',p1:55,p2:41,d:-14,k:22,w:'افت ۱۴٪ نسبت به پایش ۱ — ۱۳ KR نیازمند توجه',a:1},
+ {n:'مالی',t:'معاونت',p1:58,p2:null,d:0,k:13,w:'زمان جلسهٔ پایش ۲ تعیین نشده',a:1},
+ {n:'تأمین و خرید',t:'مدیریت',p1:36,p2:47,d:11,k:12,w:'۳ KR ثبت‌نشده',a:1},
+ {n:'کنترل کیفیت',t:'مدیریت',p1:70,p2:83,d:13,k:11,w:'جلسه ۲۷ آبان · ۱۴:۰۰'},
+ {n:'فروش داخلی',t:'مدیریت',p1:61,p2:74,d:13,k:14,w:'جلسه ۲۵ آبان · ۱۰:۳۰'},
+ {n:'فناوری اطلاعات',t:'مدیریت',p1:44,p2:68,d:24,k:15,w:'جلسه ۲۸ آبان · ۱۱:۰۰'},
+ {n:'منابع انسانی',t:'معاونت',p1:66,p2:71,d:5,k:10,w:'جلسه ۲۹ آبان · ۰۹:۳۰'},
+ {n:'فروش صادراتی',t:'مدیریت',p1:48,p2:52,d:4,k:9,w:'جلسه ۳۰ آبان · ۰۹:۰۰'}];
+const cur=p=>p.p2??p.p1;
+function chart(){const W=520,H=150,x=i=>W-14-i*(W-28)/4,y=v=>H-24-v*(H-44)/100;
+ const a=[0,31,62],e=[0,25,50,75,100];const path='M'+a.map((v,i)=>x(i)+','+y(v)).join(' L');
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="overflow:visible">
+ ${[0,50,100].map(v=>`<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>`).join('')}
+ <path d="M${e.map((v,i)=>x(i)+','+y(v)).join(' L')}" fill="none" stroke="var(--line2)" stroke-width="1.5" stroke-dasharray="4 5"/>
+ <path class="ln" d="${path}" fill="none" stroke="var(--ac)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+ ${a.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="${i==2?4.5:3}" fill="${i==2?'var(--ac)':'var(--bg)'}" stroke="var(--ac)" stroke-width="1.8"/>`).join('')}
+ ${['شروع','پایش ۱','پایش ۲','پایش ۳','نهایی'].map((l,i)=>`<text x="${x(i)}" y="${H-4}" font-size="11" text-anchor="middle" fill="${i<=2?'var(--mut)':'var(--faint)'}" style="font-family:var(--font)">${l}</text>`).join('')}
+ <text x="${x(2)}" y="${y(62)-12}" font-size="12" font-weight="700" text-anchor="middle" fill="var(--tx)" style="font-family:var(--font)">${fa(62)}</text></svg>`}
+function rows(list){return list.map(u=>{const p=cur(u),s=st(u.p2==null?null:p);
+ return `<div class="row" data-u="${U.indexOf(u)}" tabindex="0"><span class="glyph">${pie(u.p2==null?0:p,u.p2==null?'none':s)}</span>
+ <div><div class="nm">${u.n}</div><div class="faint tiny">${u.t} · ${fa(u.k)} KR</div></div>
+ <div class="why ${u.a?'w':''}">${u.w}</div>
+ <div class="mbw"><div class="mb ${s}" style="--w:${u.p2==null?0:p}%"><i></i></div></div>
+ <div class="v num">${u.p2==null?'—':P(p)}</div><div class="d num ${u.d<0?'bad':u.d>0?'ok':'faint'}">${u.p2==null?'':(u.d<0?'−':'+')+fa(Math.abs(u.d))}</div></div>`}).join('')}
+function matrix(){const hc=p=>{const h=Math.round(p*1.2);return `background:hsl(${h} 55% 92%);color:hsl(${h} 60% 24%)`};
+ let h='<div class="mx"><div></div>'+['پایش ۱','پایش ۲','پایش ۳','نهایی'].map(x=>`<div class="h" style="text-align:center">${x}</div>`).join('');
+ U.forEach((u,i)=>{h+=`<div class="u">${u.n}</div>`;[u.p1,u.p2].forEach(p=>h+=p==null?`<div class="c e">بدون جلسه</div>`:`<div class="c num" data-u="${i}" style="${hc(p)}">${fa(p)}</div>`);h+=`<div class="c e">هنوز نه</div><div class="c e">هنوز نه</div>`});return h+'</div>'}
+function dash(){
+ document.getElementById('dash').innerHTML=`
+ <div class="crumb"><b>چرم مشهد</b> ‹ نمای کلی سازمان</div>
+ <div class="hero"><div><div class="mut">امتیاز سازمان</div><div class="big num">${fa(62)}<small>٪</small></div><div class="delta num">↑ ${P(15)} نسبت به پایش ۱</div>
+  <div class="facts"><div>${pie(80,'ok')}<b class="num">${fa(118)}</b> روی مسیر</div><div>${pie(45,'risk')}<b class="num">${fa(34)}</b> در خطر</div><div>${pie(0,'none')}<b class="num">${fa(12)}</b> ثبت‌نشده</div></div></div>
+  <div><div class="faint tiny" style="margin-bottom:6px">واقعی در برابر انتظار · جلسهٔ بعدی: فروش داخلی، فردا ۱۰:۳۰</div>${chart()}</div></div>
+ <div class="sec"><h2>واحدها <span class="num">${fa(U.length)}</span></h2><div class="seg" id="vseg"><button class="on" data-v="list">فهرست</button><button data-v="mx">ماتریس</button></div></div>
+ <div id="units"></div>`;
+ const box=document.getElementById('units');
+ const list=()=>{box.innerHTML=`<div class="grp">${pie(30,'risk')} نیازمند توجه <span class="faint num">${fa(3)}</span></div>${rows(U.filter(u=>u.a))}<div class="grp">${pie(85,'ok')} در مسیر <span class="faint num">${fa(5)}</span></div>${rows(U.filter(u=>!u.a))}`;bind()};
+ const bind=()=>box.querySelectorAll('[data-u]').forEach(r=>{r.onclick=()=>peek(+r.dataset.u,r);r.onkeydown=e=>{if(e.key==='Enter')peek(+r.dataset.u,r)}});
+ list();
+ document.querySelectorAll('#vseg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#vseg button').forEach(x=>x.classList.toggle('on',x===b));b.dataset.v==='mx'?(box.innerHTML=matrix(),bind()):list()});
+}
+function peek(i,el){const u=U[i],p=cur(u);document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'));el&&el.classList.add('sel');
+ const krs=[['افزایش فروش ماهانه',78],['کاهش زمان تحویل سفارش',55],['راه‌اندازی نمایندگی جدید',null],['رضایت مشتریان',91]];
+ const pk=document.getElementById('peek');pk.innerHTML=`<button class="ib x" aria-label="بستن" id="px"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+ <div class="faint tiny">${u.t}</div><h3>${u.n}</h3>
+ <div style="display:flex;gap:12px;align-items:baseline;margin-top:10px"><span class="num" style="font-size:38px;font-weight:500;letter-spacing:-1px">${u.p2==null?'—':P(p)}</span><span class="${st(u.p2==null?null:p)}" style="font-weight:600">${stl[st(u.p2==null?null:p)]}</span></div>
+ <div class="note"><b style="color:var(--tx)">چرا این عدد؟</b><br>${u.p2==null?'جلسهٔ پایش ۲ هنوز زمان‌بندی نشده؛ امتیاز آخرین پایش ('+P(u.p1)+') نمایش داده می‌شود.':`میانگین پیشرفت ${fa(u.k)} نتیجه کلیدی ${P(p)} است و نسبت به پایش ۱ ${u.d<0?'کاهش':'افزایش'} ${P(Math.abs(u.d))} داشته. ${u.a?u.w+'.':''}`}</div>
+ <div class="sec" style="margin-top:20px"><h2>نتایج کلیدی</h2></div>
+ ${krs.map(k=>`<div class="kr">${pie(k[1]||0,st(k[1]))}<span style="flex:1">${k[0]}</span><b class="num ${st(k[1])}">${k[1]==null?'—':P(k[1])}</b></div>`).join('')}
+ <div style="display:flex;gap:8px;margin-top:20px"><button class="btn" data-go="meet">باز کردن صفحهٔ جلسه</button><button class="btn o">برنامه‌ریزی</button></div>`;
+ pk.classList.add('on');document.getElementById('px').onclick=()=>{pk.classList.remove('on');document.querySelectorAll('.row.sel').forEach(r=>r.classList.remove('sel'))};
+ pk.querySelector('[data-go]').onclick=()=>go('meet')}
+/* meeting */
+const KR=[{o:'رشد فروش محصولات چرمی',i:[['۱.۱','افزایش فروش ماهانه (میلیارد تومان)',60,120,94],['۱.۲','کاهش زمان تحویل سفارش (روز)',20,10,13],['۱.۳','راه‌اندازی ۳ نمایندگی جدید',0,3,null]]},{o:'ارتقای کیفیت خط تولید',i:[['۲.۱','کاهش ضایعات (درصد)',9,4,6.8],['۲.۲','اتمام مایلستون خط ۲ (درصد)',0,100,80],['۲.۳','آموزش اپراتورها (نفر)',0,40,12]]}];
+const calc=(b,g,v)=>{if(v===''||v==null||isNaN(v))return null;const p=g>b?(v-b)/(g-b):(b-v)/(b-g);return Math.round(Math.max(0,Math.min(1,p))*100)};
+function meet(){let r='';KR.forEach(g=>{r+=`<div class="og">${g.o}<span class="faint tiny">هدف</span></div>`;g.i.forEach(k=>{const p=calc(k[2],k[3],k[4]);r+=`<div class="kr2" data-b="${k[2]}" data-g="${k[3]}" tabindex="0"><span class="num faint">${k[0]}</span><span class="t">${k[1]}</span><span class="num mut bl">${fa(k[2])} ← <b style="color:var(--tx)">${fa(k[3])}</b></span><input class="inp num" aria-label="${k[1]}" value="${k[4]==null?'':fa(k[4])}" placeholder="—"><span class="pcell"><span class="pg">${pie(p||0,st(p))}</span><span class="num pv">${p==null?'—':P(p)}</span></span><span class="st mut tiny">${stl[st(p)]}</span></div>`})});
+ document.getElementById('meet').innerHTML=`<div class="crumb"><b>فروش داخلی</b> ‹ جلسهٔ پایش ۲</div>
+ <div class="mh"><div><h1>پایش ۲ · فروش داخلی</h1><div class="mut" style="margin-top:2px">۲۵ آبان ۱۴۰۵، ساعت ۱۰:۳۰ · اتاق شورا</div></div><div style="display:flex;gap:8px"><button class="btn o">Excel</button><button class="btn">برگزار شد ✓</button></div></div>
+ <div class="steps"><span class="dn">شروع</span><span class="dn">پایش ۱</span><span class="cur">پایش ۲</span><span>پایش ۳</span><span>نهایی</span></div>${r}`;
+ const rows=[...document.querySelectorAll('.kr2')];let idx=-1,tm;
+ const upd=tr=>{const raw=tr.querySelector('input').value.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫','.');const p=calc(+tr.dataset.b,+tr.dataset.g,raw===''?null:parseFloat(raw));tr.querySelector('.pv').textContent=p==null?'—':P(p);tr.querySelector('.pg').innerHTML=pie(p||0,st(p));tr.querySelector('.st').textContent=stl[st(p)];const s=document.getElementById('saved');s.textContent='در حال ذخیره…';clearTimeout(tm);tm=setTimeout(()=>s.textContent='ذخیره شد ✓',500)};
+ const sel=i=>{idx=Math.max(0,Math.min(rows.length-1,i));rows.forEach((x,j)=>x.classList.toggle('sel',j===idx));rows[idx].scrollIntoView({block:'nearest'})};
+ rows.forEach((tr,i)=>{tr.querySelector('input').addEventListener('input',()=>upd(tr));tr.addEventListener('click',()=>sel(i));tr.querySelector('input').addEventListener('focus',e=>{e.target.select();sel(i)})});
+ window.__meetKeys=e=>{if(!document.getElementById('meet').classList.contains('on')||document.getElementById('ov').classList.contains('on'))return;const inInp=document.activeElement.tagName==='INPUT';
+  if(inInp){if(e.key==='Escape'||e.key==='Enter'){document.activeElement.blur();e.preventDefault()}return}
+  if(e.key==='j'||e.key==='ArrowDown'){sel(idx+1);e.preventDefault()}else if(e.key==='k'||e.key==='ArrowUp'){sel(idx-1);e.preventDefault()}else if(e.key==='Enter'&&idx>=0){rows[idx].querySelector('input').focus();e.preventDefault()}};
+ sel(0)}
+function go(s){document.querySelectorAll('.screen').forEach(x=>x.classList.toggle('on',x.id===s));document.querySelectorAll('.tab[data-go]').forEach(t=>t.classList.toggle('on',t.dataset.go===s));document.getElementById('foot').style.display=s==='meet'?'flex':'none';document.getElementById('peek').classList.remove('on');window.scrollTo(0,0)}
+document.querySelectorAll('.tab[data-go]').forEach(t=>t.onclick=e=>{e.preventDefault();go(t.dataset.go)});
+/* palette */
+const CMDS=[['برو به',[['نمای کلی سازمان','G D',()=>go('dash')],['جلسهٔ پایش ۲ · فروش داخلی','G M',()=>go('meet')],['اهداف','G O'],['گزارش‌ها','G R'],['همترازی','G A'],['تعهدات','G C']]],['اقدام',[['ثبت مقدار برای KR…','V'],['برنامه‌ریزی جلسهٔ مالی','S'],['خروجی Excel چرخه','E'],['تغییر تم روشن/تیره','T',()=>toggleTheme()]]],['واحدها',U.slice(0,4).map(u=>['باز کردن '+u.n,'',()=>{go('dash');setTimeout(()=>peek(U.indexOf(u)),60)}])]];
+let pi=0,flat=[];
+function pal(q=''){flat=[];let h='';CMDS.forEach(([g,it])=>{const m=it.filter(i=>i[0].includes(q));if(!m.length)return;h+=`<div class="g">${g}</div>`;m.forEach(i=>{h+=`<div class="it ${flat.length===pi?'on':''}" data-i="${flat.length}"><span>${i[0]}</span>${i[1]?`<span class="kbd">${i[1]}</span>`:''}</div>`;flat.push(i)})});document.getElementById('res').innerHTML=h||'<div class="it mut">نتیجه‌ای نیست</div>';document.querySelectorAll('#res .it[data-i]').forEach(e=>e.onclick=()=>run(+e.dataset.i))}
+function run(i){const f=flat[i];closePal();f&&f[2]&&f[2]()}
+function openPal(){pi=0;document.getElementById('ov').classList.add('on');const q=document.getElementById('q');q.value='';pal();q.focus()}
+function closePal(){document.getElementById('ov').classList.remove('on')}
+document.getElementById('open-pal').onclick=openPal;document.getElementById('ov').onclick=e=>{if(e.target.id==='ov')closePal()};
+document.getElementById('q').oninput=e=>{pi=0;pal(e.target.value)};
+document.addEventListener('keydown',e=>{
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openPal();return}
+ if(document.getElementById('ov').classList.contains('on')){if(e.key==='Escape')closePal();else if(e.key==='ArrowDown'){pi=Math.min(flat.length-1,pi+1);pal(document.getElementById('q').value);e.preventDefault()}else if(e.key==='ArrowUp'){pi=Math.max(0,pi-1);pal(document.getElementById('q').value);e.preventDefault()}else if(e.key==='Enter'){run(pi)}return}
+ if(e.key==='Escape')document.getElementById('peek').classList.remove('on');
+ window.__meetKeys&&window.__meetKeys(e)});
+function toggleTheme(){const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'':'dark'}
+document.getElementById('theme').onclick=toggleTheme;
+dash();meet();
+const q=new URLSearchParams(location.search);if(q.get('s')==='meet')go('meet');if(q.get('theme')==='dark')toggleTheme();if(q.get('peek')!==null)peek(+q.get('peek'));if(q.get('pal')!==null)openPal();
+</script>
+</body>
+</html>

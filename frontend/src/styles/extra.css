@@ -1,0 +1,93 @@
+/* Additions on top of the approved v7 CSS: states the design listed as "not designed yet",
+   and phone ergonomics (touch targets, bottom nav, bottom sheet). */
+.lnk{color:var(--ac);font-weight:600;text-decoration:underline}
+.sk{height:44px;border-radius:12px;margin-top:8px;background:linear-gradient(90deg,var(--hover),var(--line),var(--hover));background-size:200% 100%;animation:sk 1.4s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.empty{display:grid;justify-items:center;gap:4px;padding:48px 16px;text-align:center;color:var(--mut)}
+.login{min-height:100dvh;display:grid;place-items:center;padding:24px}
+.login .card{width:min(380px,100%);padding:26px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.ro{background:var(--hover);color:var(--mut);cursor:default}
+.warnbar{margin:0 0 14px;padding:10px 14px;border-radius:12px;color:var(--risk);background:color-mix(in srgb,var(--risk) 9%,var(--panel));border:1px solid color-mix(in srgb,var(--risk) 35%,var(--line))}
+.inp.err{border-color:var(--bad)}
+.ok{color:var(--ok)}.risk{color:var(--risk)}.bad{color:var(--bad)}.none{color:var(--none)}
+.mb.ok{color:var(--ok)}.mb.risk{color:var(--risk)}.mb.bad{color:var(--bad)}.mb.none{color:var(--none)}
+.mbw{min-width:60px}
+.hero .mut,.hero .faint{position:relative}
+.tabs{overflow-x:auto;scrollbar-width:none}
+
+@media (pointer:coarse){.btn,.seg button,.tab,.ib,.pc{min-height:44px}.inp{min-height:44px}.ib{min-width:44px}}
+@media (max-width:900px){
+  /* a backdrop-filter would make the header the containing block of the fixed bottom nav */
+  .bar{padding-inline:10px;gap:8px;backdrop-filter:none;background:var(--panel)}
+  .ctx,.cmd span:not(.kbd){display:none}.cmd{min-width:0;padding:6px 9px}.cmd .kbd{display:none}
+  .tabs{position:fixed;inset-inline:0;bottom:0;z-index:25;margin:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);justify-content:space-around}
+  .tab{flex:1;text-align:center;padding:10px 4px}
+  .page{padding:16px 12px 96px}
+  .peek{top:auto;inset-inline:0;width:auto;max-height:82dvh;border-radius:18px 18px 0 0;border:1px solid var(--line2);transform:translateY(110%);padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  .peek.on{transform:none}
+  .foot{display:none}
+  .mrow,.urow{grid-template-columns:1fr 1fr}
+}
+
+/* segmented control rendered with links (admin tabs) */
+.seg a{display:inline-block;color:var(--mut);padding:3px 13px;border-radius:7px}
+.seg a.on{background:var(--panel);color:var(--tx);box-shadow:0 0 0 1px var(--line);font-weight:600}
+
+/* ---- unit home: cycle timeline, start-session readiness, definition list ---- */
+.cyc{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.cyc .trk{flex:1;min-width:160px;max-width:340px;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.cyc .trk i{display:block;height:100%;width:var(--w);border-radius:inherit;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.tl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(156px,1fr);gap:10px;overflow-x:auto;margin:14px 0 26px;padding:2px 2px 6px}
+.tl a{display:grid;gap:2px;align-content:start;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:inherit;transition:border-color .12s}
+.tl a:hover{border-color:var(--line2)}
+.tl a.held{background:var(--hover)}
+.tl a.next{border-color:var(--ac);box-shadow:0 0 0 2px var(--acs)}
+.tl .lb{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:700}
+.tl .when{font-size:14px;font-weight:500}
+.tl .rel{font-size:13px;font-weight:600;color:var(--ac)}
+.ready{margin:0 0 26px;padding:16px 18px;border-radius:16px;border:1px solid var(--line2);background:var(--panel)}
+.ready h2{font-size:14px;font-weight:700}
+.ready ul{list-style:none;display:grid;gap:6px;margin-top:10px}
+.ready li{display:flex;gap:8px;align-items:baseline}
+.ready li .ck{flex:none;width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;font-size:13px;border:1.5px solid var(--line2);color:transparent}
+.ready li.on .ck{background:var(--ok);border-color:var(--ok);color:#fff}
+.ready li.on>span:nth-child(2){color:var(--mut)}
+.ob .desc{margin:-2px 6px 6px;color:var(--mut);font-size:13.5px;line-height:1.8}
+.wkr{display:grid;grid-template-columns:42px minmax(200px,1fr) 128px 150px;gap:14px;align-items:center;padding:12px;margin-top:8px;border-radius:11px;background:var(--panel);border:1px solid var(--line2);cursor:pointer;text-align:start;width:100%;color:inherit}
+.wkr:hover{border-color:color-mix(in srgb,var(--c) 55%,var(--line2))}
+.wkr>.num.faint{font-weight:700;color:var(--c)}
+.wkr .t{font-weight:600;line-height:1.6}
+.wkr .m{display:flex;gap:8px;align-items:center;margin-top:2px;flex-wrap:wrap}
+.addkr{margin-top:8px;width:100%;padding:9px;border-radius:11px;border:1.5px dashed color-mix(in srgb,var(--c) 40%,var(--line2));color:var(--mut);font-weight:600}
+.addkr:hover{color:var(--tx);background:var(--panel)}
+@media (max-width:900px){
+  .tl{grid-auto-flow:row;grid-auto-columns:auto}
+  .wkr{grid-template-columns:34px 1fr}.wkr>.bt,.wkr>.ow{grid-column:2}
+}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media(max-width:900px){.imp-row{grid-template-columns:1fr!important}.imp-row>span:last-child{justify-content:start!important}}
+
+/* unit home: progress column on each KR */
+.wkr{grid-template-columns:42px minmax(200px,1fr) 118px 96px 140px}
+.wkr .pg{display:flex;flex-direction:column;gap:2px}
+.wkr .pg .pcell{display:flex;gap:6px;align-items:center}
+
+/* account menu */
+.acct{position:relative}
+.acct .menu{position:absolute;top:calc(100% + 8px);inset-inline-end:0;min-width:200px;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 32px -12px rgba(0,0,0,.25);padding:6px;z-index:40}
+.acct .who{display:flex;flex-direction:column;gap:2px;padding:8px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.acct .it{display:block;width:100%;text-align:start;padding:9px 10px;border-radius:8px;background:none;border:0;color:var(--bad);font:inherit;cursor:pointer}
+.acct .it:hover,.acct .it:focus-visible{background:var(--hover)}
+
+/* KR rows (session page, my KRs) */
+.kr2.my{grid-template-columns:42px minmax(220px,1fr) 104px 96px 76px 110px}
+@media (max-width:900px){
+  /* phone: title with baseline→target under it, value and percent stacked at the end */
+  .kr2,.kr2.my{grid-template-columns:30px minmax(0,1fr) 92px;row-gap:4px}
+  .kr2>.bt{grid-column:2;grid-row:2;font-size:13px}
+  .kr2>.inp{grid-column:3;grid-row:1}
+  .kr2>.pcell{display:flex!important;grid-column:3;grid-row:2;justify-content:center;gap:5px;align-items:center}
+  .kr2>.st{display:none}
+  .wkr{grid-template-columns:34px 1fr}.wkr>.pg{grid-column:2;flex-direction:row;gap:8px;align-items:center}
+}
