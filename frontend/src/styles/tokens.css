@@ -1,0 +1,90 @@
+/* ===== Design tokens: palette A «کنیاک و عاج» =====
+   Source of truth: docs/07-review-and-roadmap.md §3 «توکن‌های نهایی پالت A».
+   Rules: accent < 3% of a page (primary button, active menu item, focus ring, links, "you are here" bar);
+   colour otherwise only means status; 7 font sizes, 3 weights (700 only for titles and KPI numbers);
+   4 radii; 4px spacing grid; cards carry no shadow. */
+@layer tokens, base, components, screens;
+
+@layer tokens {
+  :root {
+    color-scheme: light;
+    /* surfaces */
+    --bg: #f6f3ee;
+    --surface: #ffffff;
+    --surface-2: #faf8f4;
+    --hover: #f1ece4;
+    --selected: #f3e8df;
+    --line: #e6e0d6;
+    --line-strong: #d5ccbf;
+    --track: #ece6dc;
+    --band: #ece6dc;            /* objective header row in tables */
+    --band-text: #3a322a;
+    /* text */
+    --text: #1f1b16;
+    --text-muted: #5b5248;
+    --text-faint: #6f665a;
+    /* accent (leather) */
+    --accent: #8a4b2a;
+    --accent-hover: #723c20;
+    --accent-soft: color-mix(in srgb, #8a4b2a 14%, transparent);
+    --on-accent: #ffffff;
+    /* side menu */
+    --side: #efeae2;
+    --side-text: #3a322a;
+    --side-muted: #6f665a;
+    --side-active: #ffffff;
+    /* status: text / background / bar */
+    --ok: #2a7350;   --ok-bg: #e6f2ea;   --ok-bar: #3f9a6e;
+    --risk: #8a5a00; --risk-bg: #fbf0d6; --risk-bar: #d4a13a;
+    --bad: #b3261e;  --bad-bg: #fbe7e4;  --bad-bar: #c8463d;
+    --none: #5f6670; --none-bg: #eef0f2; --none-bar: #c9c2b7;
+    /* strategic goals: small dots only */
+    --g0: #4f6d8f; --g1: #7a5c8e; --g2: #a0643a; --g3: #4f7d5c; --g4: #96803a; --g5: #4e8584;
+    /* overlays */
+    --scrim: rgb(31 27 22 / .38);
+    --shadow-pop: 0 12px 32px -8px rgb(31 27 22 / .22);
+
+    /* type: 13 / 14 / 15 / 17 / 20 / 24 / 32 */
+    --font: Vazirmatn, Tahoma, sans-serif;
+    --fs-xs: 13px; --fs-sm: 14px; --fs-md: 15px; --fs-lg: 17px; --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 32px;
+    --fw-regular: 400; --fw-medium: 500; --fw-semibold: 600; --fw-bold: 700;
+    /* shape */
+    --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-pill: 999px;
+    /* layout */
+    --bar-h: 60px;
+    --side-w: 248px;
+    --row-min: 44px;
+  }
+
+  :root[data-theme=dark] {
+    color-scheme: dark;
+    --bg: #1a1714;
+    --surface: #221e1a;
+    --surface-2: #26211c;
+    --hover: #2b2520;
+    --selected: #3a2c22;
+    --line: #342e28;
+    --line-strong: #443c34;
+    --track: #342e28;
+    --band: #2b2520;
+    --band-text: #d9d1c5;
+    --text: #e9e4dc;
+    --text-muted: #b5aa9b;
+    --text-faint: #a19686;
+    --accent: #d39a6e;
+    --accent-hover: #e0ae86;
+    --accent-soft: color-mix(in srgb, #d39a6e 18%, transparent);
+    --on-accent: #1a1714;
+    --side: #14110f;
+    --side-text: #d9d1c5;
+    --side-muted: #a19686;
+    --side-active: #26211c;
+    --ok: #6cc39a;   --ok-bg: #1f3a2d;   --ok-bar: #6cc39a;
+    --risk: #e0b45c; --risk-bg: #3a2f16; --risk-bar: #e0b45c;
+    --bad: #f08a7e;  --bad-bg: #3f2220;  --bad-bar: #f08a7e;
+    --none: #a8a196; --none-bg: #2b2723; --none-bar: #5a5249;
+    --g0: #8fa9c8; --g1: #b49cc4; --g2: #d29a6e; --g3: #8cbb98; --g4: #d2bd72; --g5: #86bdbc;
+    --scrim: rgb(0 0 0 / .55);
+    --shadow-pop: 0 14px 36px -8px rgb(0 0 0 / .6);
+  }
+}

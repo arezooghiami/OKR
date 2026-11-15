@@ -19,7 +19,7 @@ export default function MyKRs() {
   if (loading && !data) return <Skeleton rows={5} />;
   if (error) return <ErrorBox message={error} onRetry={reload} />;
   const blocks = data ?? [];
-  if (blocks.length === 0) return <><Crumb items={["KRهای من"]} /><Empty title="نتیجهٔ کلیدی‌ای به شما سپرده نشده است" hint="وقتی مدیر واحد شما را مسئول یک KR کند، اینجا می‌بینید و پیشرفتش را ثبت می‌کنید." /></>;
+  if (blocks.length === 0) return <><Crumb items={["KRهای من"]} /><div className="mh"><h1>ثبت پیشرفت</h1></div><Empty icon="inbox" title="نتیجهٔ کلیدی‌ای به شما سپرده نشده است" hint="وقتی مدیر واحد شما را مسئول یک نتیجهٔ کلیدی کند، اینجا می‌بینید و پیشرفتش را ثبت می‌کنید." /></>;
 
   const all = blocks.flatMap((b) => b.key_results);
   const open = all.filter((k) => k.editable);
@@ -91,7 +91,7 @@ function KRCard({ k, onRecorded }: { k: KR; onRecorded: (has: boolean) => void }
       </div>
       <div className="stats">
         {milestone
-          ? <><div className="st"><small>نوع</small><b style={{ fontSize: 16 }}>درصد انجام</b></div><div className="st"><small>هدف</small><b className="num">۱۰۰٪</b></div></>
+          ? <><div className="st"><small>نوع</small><b style={{ fontSize: "var(--fs-md)" }}>درصد انجام</b></div><div className="st"><small>هدف</small><b className="num">۱۰۰٪</b></div></>
           : <><div className="st"><small>خط مبنا</small><b className="num">{fa(k.baseline)}</b></div><div className="st"><small>هدف</small><b className="num">{fa(k.target)}</b>{k.unit_of_measure && <small style={{ display: "inline" }}> {k.unit_of_measure}</small>}</div></>}
         <div className="st"><small>{k.previous_round ? `مقدار ${k.previous_round}` : "مقدار قبلی"}</small><b className="num">{k.previous_value == null ? "—" : fa(k.previous_value, 4)}</b></div>
       </div>
@@ -103,7 +103,7 @@ function KRCard({ k, onRecorded }: { k: KR; onRecorded: (has: boolean) => void }
         </div>
         <div>
           <label htmlFor={`n-${k.id}`}>توضیح کوتاه: چه کار شد؟</label>
-          <textarea id={`n-${k.id}`} className="note" placeholder="مثلاً: دو فروشگاه راه‌اندازی شد، دفاتر آذر" value={note} readOnly={!k.editable}
+          <textarea id={`n-${k.id}`} className="memo" placeholder="مثلاً: دو فروشگاه راه‌اندازی شد، دفاتر آذر" value={note} readOnly={!k.editable}
             onChange={(e) => { setNote(e.target.value); schedule(val, e.target.value); }} />
         </div>
       </div>

@@ -36,7 +36,7 @@ export function useAction() {
 }
 
 export const Msg = ({ err, ok }: { err: string | null; ok?: string | null }) =>
-  err ? <div className="note" role="alert" style={{ color: "var(--bad)" }}>{err}</div> : ok ? <div className="note ok" role="status">{ok}</div> : null;
+  err ? <div className="note err-box" role="alert">{err}</div> : ok ? <div className="note ok" role="status">{ok}</div> : null;
 
 export const Section = ({ title, children }: { title: ReactNode; children: ReactNode }) => (
   <div className="card"><h3>{title}</h3>{children}</div>

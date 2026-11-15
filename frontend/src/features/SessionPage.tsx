@@ -68,7 +68,7 @@ export default function SessionPage() {
         <div>
           <h1>{data.time_point} · {data.unit_name}</h1>
           <div className="mut" style={{ marginTop: 2 }}>
-            {data.status === "unscheduled" ? <span className="risk">زمان جلسه تعیین نشده</span> : <>{jDateTime(data.held_at ?? data.scheduled_at)}{data.place && ` · ${data.place}`}{data.status === "held" && " · برگزار شد"}</>}
+            {data.status === "unscheduled" ? <span className="risk">زمان جلسه تعیین نشده</span> : <>{jDateTime(data.held_at ?? data.scheduled_at)}{data.place && `، ${data.place}`}{data.status === "held" && " · برگزار شد"}</>}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -97,10 +97,10 @@ export default function SessionPage() {
       {readOnlyWhy && view === "cur" && <div className="note" role="status">{readOnlyWhy}</div>}
 
       {view === "all" ? <AllRounds sessions={sessions.data ?? []} /> : (
-        <div ref={rowsRef}>
+        <div ref={rowsRef} className={data.objectives.length ? "sheet" : undefined}>
           {data.objectives.length === 0 && <div className="empty"><b>هنوز هدفی تعریف نشده است</b></div>}
-          {data.objectives.map((o, oi) => (
-            <section className="ob" key={o.id} style={{ ["--c" as string]: `var(--g${oi % 6})` }}>
+          {data.objectives.map((o) => (
+            <section className="ob" key={o.id}>
               <div className="og"><span className="no">هدف {fa(o.number)}</span><b>{o.title}</b>
                 <span className={`tiny ${o.owner_name ? "mut" : "risk"}`}>{o.owner_name ? `متصدی: ${o.owner_name}` : "بدون متصدی"}</span>
                 {data.can_edit_definitions && <button className="lnk tiny" onClick={() => peek.open(<ObjectiveForm key={o.id} unitId={data.unit_id} unitName={data.unit_name} sessionId={data.id} objective={o} onDone={() => { peek.close(); reload(); }} />)}>ویرایش</button>}
@@ -159,7 +159,7 @@ function Row({ k, sessionId, editable, selected, onSelect, onOpen, onSaving }: {
       <span className="num faint">{k.code.split(".").map((p) => fa(p)).join(".")}</span>
       <div><div className="t">{k.title}</div>
         <div className="m">{k.goal && <Tag color={k.goal.color}>{k.goal.title}</Tag>}{k.owner_name && <span className="faint tiny">مسئول: {k.owner_name}</span>}{k.definition_version > 1 && <span className="faint tiny">نسخهٔ تعریف {fa(k.definition_version)}</span>}</div></div>
-      <span className="bt num mut" style={{ whiteSpace: "nowrap" }}>{fa(k.baseline)} ← <b style={{ color: "var(--tx)" }}>{fa(k.target)}</b></span>
+      <span className="bt num mut" style={{ whiteSpace: "nowrap" }}>{fa(k.baseline)} ← <b style={{ color: "var(--text)" }}>{fa(k.target)}</b></span>
       <input className={`inp num ${editable ? "" : "ro"} ${bad ? "err" : ""}`} aria-label={`میزان پیشرفت ${k.title}`} inputMode="decimal" placeholder="—" value={val} readOnly={!editable}
         onFocus={(e) => { e.target.select(); onSelect(); }}
         onChange={(e) => { setVal(e.target.value); setBad(parseNumber(e.target.value) === undefined); schedule(); }} />
@@ -181,12 +181,12 @@ function AllRounds({ sessions }: { sessions: SessionHead[] }) {
   const rows = pages[0]?.objectives.flatMap((o) => o.key_results.map((k) => ({ o, k }))) ?? [];
   const cell = (p: SessionT, id: string) => p.objectives.flatMap((o) => o.key_results).find((x) => x.id === id);
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table className="all">
-        <thead><tr><th style={{ textAlign: "start" }}>نتیجه کلیدی</th><th>مبنا</th><th>هدف</th>{pages.map((p) => <th key={p.id}>{p.time_point}</th>)}</tr></thead>
+    <div className="tw">
+      <table className="dt">
+        <thead><tr><th>نتیجه کلیدی</th><th className="c">مبنا</th><th className="c">هدف</th>{pages.map((p) => <th key={p.id} className="c">{p.time_point}</th>)}</tr></thead>
         <tbody>{rows.map(({ k }) => (
-          <tr key={k.id}><td className="l"><span className="num faint">{k.code.split(".").map((x) => fa(x)).join(".")}</span> {k.title}</td><td className="num mut">{fa(k.baseline)}</td><td className="num"><b>{fa(k.target)}</b></td>
-            {pages.map((p) => { const c = cell(p, k.id); return c?.value == null ? <td key={p.id} className="f" /> : <td key={p.id}><div className="num" style={{ fontWeight: 700 }}>{fa(c.value)}</div><div className={`pp num ${STATUS_CLASS[c.status]}`}>{pct(c.percent)}</div></td>; })}
+          <tr key={k.id}><td className="l"><span className="num faint">{k.code.split(".").map((x) => fa(x)).join(".")}</span> {k.title}</td><td className="num mut c">{fa(k.baseline)}</td><td className="num c"><b>{fa(k.target)}</b></td>
+            {pages.map((p) => { const c = cell(p, k.id); return c?.value == null ? <td key={p.id} className="c empty-c" /> : <td key={p.id} className="c"><div className="num" style={{ fontWeight: 600 }}>{fa(c.value)}</div><div className={`pp num ${STATUS_CLASS[c.status]}`}>{pct(c.percent)}</div></td>; })}
           </tr>))}</tbody>
       </table>
     </div>

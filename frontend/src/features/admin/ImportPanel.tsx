@@ -99,7 +99,7 @@ export default function ImportPanel() {
       </div>
 
       {report && report.blocking.length > 0 && (
-        <div className="note" role="alert" style={{ color: "var(--bad)" }}>
+        <div className="note err-box" role="alert">
           {report.blocking.map((b) => <div key={b}>{b}</div>)}
           <Link className="lnk" to="/admin/cycle">رفتن به چرخه و جلسه‌ها</Link>
         </div>
@@ -133,12 +133,12 @@ export default function ImportPanel() {
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(110px,1fr) minmax(170px,1.3fr) minmax(150px,1.4fr) auto", gap: 12, alignItems: "center" }} className="imp-row">
                   <b dir="auto">{s.sheet.trim()}</b>
                   <select aria-label={`واحد مقصد شیت ${s.sheet.trim()}`} value={value} disabled={a.busy} onChange={(e) => change(s.sheet, e.target.value)}
-                    style={{ padding: "6px 8px", border: "1px solid var(--line2)", borderRadius: 9, background: "var(--bg)", color: "var(--tx)" }}>
+                    style={{ padding: "6px 8px", border: "1px solid var(--line-strong)", borderRadius: 8, background: "var(--surface)", color: "var(--text)" }}>
                     <option value="create">+ واحد جدید «{c.action === "create" ? c.name : s.sheet.trim()}»</option>
                     <optgroup label="واحدهای موجود">{report.units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</optgroup>
                     <option value="skip">وارد نشود</option>
                   </select>
-                  <span className="mut tiny">{fa(s.objectives)} هدف · {fa(s.krs)} KR{s.values > 0 && <> · {fa(s.values)} مقدار</>}{s.notes > 0 && <> · {fa(s.notes)} یادداشت</>}</span>
+                  <span className="mut tiny">{fa(s.objectives)} هدف، {fa(s.krs)} KR{s.values > 0 && <>، {fa(s.values)} مقدار</>}{s.notes > 0 && <>، {fa(s.notes)} یادداشت</>}</span>
                   <span style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "end" }}>
                     <span className={`tiny ${cls}`} style={{ fontWeight: 600 }}>{label}</span>
                     {s.issues.length > 0 && <button className="lnk tiny" aria-expanded={open === s.sheet} onClick={() => setOpen(open === s.sheet ? null : s.sheet)}>
@@ -159,7 +159,7 @@ export default function ImportPanel() {
             <div className="card" style={{ marginTop: 14 }}>
               <h3>اهداف کسب‌وکاری</h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {report.goals.map((g) => <span key={g.title} className="tag" style={{ ["--c" as string]: "var(--g0)" }}>{g.title} · {fa(g.krs)}{g.action === "create" && " · جدید"}</span>)}
+                {report.goals.map((g) => <span key={g.title} className="tag" style={{ ["--c" as string]: "var(--g0)" }}>{g.title}، {fa(g.krs)}{g.action === "create" && " · جدید"}</span>)}
               </div>
               {report.unmatched_goals.length > 0 && (
                 <div className="note">این مقادیر در ستون «هدف کسب‌وکاری» بودند ولی در فهرست اهداف نیستند (احتمالاً ستون جابه‌جا پر شده). در توضیحات KR نگه داشته می‌شوند:

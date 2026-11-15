@@ -21,8 +21,8 @@ function Rows({ title, rows, users }: { title: string; rows: OrgImportRow[]; use
         {same > 0 && <button className="lnk tiny" onClick={() => setAll(!all)}>{all ? "فقط ردیف‌های تغییرکرده" : `نمایش ${fa(same)} ردیف بدون تغییر`}</button>}
       </div>
       {shown.length === 0 ? <div className="faint tiny">هیچ ردیفی تغییری ندارد.</div> : (
-        <div className="imp-wrap">
-          <table className="imp-t">
+        <div className="tw">
+          <table className="dt">
             <thead><tr><th>ردیف</th><th>{users ? "کاربر" : "واحد"}</th>{users && <th>نقش و واحد</th>}<th>وضعیت</th><th>جزئیات</th></tr></thead>
             <tbody>
               {shown.map((r, i) => {
@@ -86,13 +86,13 @@ export default function OrgImport({ usersFirst, onClose, onDone }: { usersFirst?
 
       {done ? (
         <>
-          <p className="ok" style={{ fontWeight: 700 }}>ثبت شد ✓</p>
-          <p>{fa(done.totals.units_new)} واحد جدید، {fa(done.totals.units_updated)} واحد تغییرکرده · {fa(done.totals.users_new)} کاربر جدید، {fa(done.totals.users_updated)} کاربر تغییرکرده
-            {done.totals.errors > 0 && <span className="bad"> · {fa(done.totals.errors)} ردیف خطا وارد نشد</span>}</p>
+          <p className="ok" style={{ fontWeight: 600 }}>ثبت شد ✓</p>
+          <p>{fa(done.totals.units_new)} واحد جدید، {fa(done.totals.units_updated)} واحد تغییرکرده، {fa(done.totals.users_new)} کاربر جدید، {fa(done.totals.users_updated)} کاربر تغییرکرده
+            {done.totals.errors > 0 && <span className="bad">، {fa(done.totals.errors)} ردیف خطا وارد نشد</span>}</p>
           {done.credentials.length > 0 && (
             <div className="imp-sec">
               <div className="warnbar" role="status"><b>رمز اولیهٔ {fa(done.credentials.length)} کاربر جدید فقط همین یک بار نشان داده می‌شود.</b> فایل را بگیرید و به هر نفر رمز خودش را بدهید.</div>
-              <div className="imp-wrap"><table className="imp-t">
+              <div className="tw"><table className="dt">
                 <thead><tr><th>نام</th><th>نام کاربری</th><th>رمز اولیه</th></tr></thead>
                 <tbody>{done.credentials.map((c) => <tr key={c.username}><td>{c.full_name}</td><td dir="ltr">{c.username}</td><td dir="ltr"><code>{c.password}</code></td></tr>)}</tbody>
               </table></div>
@@ -125,8 +125,8 @@ export default function OrgImport({ usersFirst, onClose, onDone }: { usersFirst?
               {report.blocking.map((b) => <div key={b} className="warnbar" role="alert">{b}</div>)}
               {!report.blocking.length && t && (
                 <p className="imp-sum">
-                  <b>پیش‌نمایش:</b> {fa(t.units_new)} واحد جدید، {fa(t.units_updated)} واحد تغییر · {fa(t.users_new)} کاربر جدید، {fa(t.users_updated)} کاربر تغییر
-                  {t.errors > 0 && <span className="bad"> · {fa(t.errors)} ردیف خطا (وارد نمی‌شوند؛ در فایل درست کنید و دوباره انتخاب کنید)</span>}
+                  <b>پیش‌نمایش:</b> {fa(t.units_new)} واحد جدید، {fa(t.units_updated)} واحد تغییر، {fa(t.users_new)} کاربر جدید، {fa(t.users_updated)} کاربر تغییر
+                  {t.errors > 0 && <span className="bad">، {fa(t.errors)} ردیف خطا (وارد نمی‌شوند؛ در فایل درست کنید و دوباره انتخاب کنید)</span>}
                   {report.types_created.length > 0 && <span className="faint"> · نوع واحد جدید: {report.types_created.join("، ")}</span>}
                 </p>
               )}

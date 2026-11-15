@@ -3,9 +3,10 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./auth/AuthContext";
-import "./styles/app.css";
-import "./styles/extra.css";
-import "./styles/v2.css";
+import "./styles/tokens.css";
+import "./styles/base.css";
+import "./styles/components.css";
+import "./styles/screens.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

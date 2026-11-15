@@ -89,7 +89,7 @@ function UnitWorkspace({ unitId, cycleId, units }: { unitId: string; cycleId: st
       {!data.read_only && !data.start_held && start && <Readiness data={data} start={start} />}
 
       <div className="sec">
-        <h2>اهداف و نتایج کلیدی <span className="num">{fa(data.objectives.length)} هدف · {fa(krCount)} KR</span></h2>
+        <h2>اهداف و نتایج کلیدی <span className="num">{fa(data.objectives.length)} هدف، {fa(krCount)} KR</span></h2>
         {data.can_define && <button className="btn" onClick={() => { newObjective.current?.scrollIntoView({ block: "center" }); newObjective.current?.focus(); }}>+ هدف جدید</button>}
       </div>
       {data.read_only ? null : data.can_edit
@@ -106,7 +106,7 @@ function CycleLine({ data }: { data: Workspace }) {
   const left = Math.max(0, Math.ceil((e - Date.now()) / DAY));
   return (
     <div className="cyc mut">
-      <span><b style={{ color: "var(--tx)" }}>{data.cycle.name}</b> · {jDate(data.cycle.starts_on)} تا {jDate(data.cycle.ends_on)}</span>
+      <span><b style={{ color: "var(--text)" }}>{data.cycle.name}</b> · {jDate(data.cycle.starts_on)} تا {jDate(data.cycle.ends_on)}</span>
       <span className="trk" role="progressbar" aria-label="پیشرفت زمانی چرخه" aria-valuenow={Math.round(elapsed)} aria-valuemin={0} aria-valuemax={100}><i style={{ ["--w" as string]: `${elapsed}%` }} /></span>
       <span className="tiny">{data.read_only ? "بسته شده" : Date.now() < s ? `${fa(Math.ceil((s - Date.now()) / DAY))} روز تا شروع` : `${fa(left)} روز مانده`}</span>
     </div>
@@ -146,7 +146,7 @@ function Readiness({ data, start }: { data: Workspace; start: SessionHead }) {
       </div>
       <div className="mut tiny" style={{ marginTop: 4 }}>
         در این جلسه اهداف، نتایج کلیدی و متصدی‌ها بررسی و تصویب می‌شوند.
-        {start.scheduled_at && <> زمان: {jDate(start.scheduled_at)}، ساعت {jTime(start.scheduled_at)}{start.place && ` · ${start.place}`}.</>}
+        {start.scheduled_at && <> زمان: {jDate(start.scheduled_at)}، ساعت {jTime(start.scheduled_at)}{start.place && `، ${start.place}`}.</>}
       </div>
       <ul>
         {data.readiness.map((r) => (

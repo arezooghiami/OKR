@@ -6,7 +6,7 @@ export function Pie({ p, status, size = 15 }: { p: number | null; status?: Statu
   const cls = STATUS_CLASS[status ?? statusFor(p)];
   return (
     <svg className={`i ${cls}`} style={{ width: size, height: size }} viewBox="0 0 16 16" aria-hidden="true">
-      <circle cx="8" cy="8" r="6.5" fill="none" stroke="var(--line2)" strokeWidth="1.4" />
+      <circle cx="8" cy="8" r="6.5" fill="none" stroke="var(--line-strong)" strokeWidth="1.4" />
       {p ? <circle cx="8" cy="8" r="3.25" fill="none" stroke="currentColor" strokeWidth="6.5" strokeDasharray={`${(p / 100) * 20.42} 20.42`} transform="rotate(-90 8 8)" /> : null}
     </svg>
   );
@@ -28,23 +28,35 @@ export const Skeleton = ({ rows = 4 }: { rows?: number }) => (
 
 export function ErrorBox({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="note" role="alert" style={{ color: "var(--bad)" }}>
+    <div className="note err-box" role="alert">
       <b>خطا:</b> {message}
       {onRetry && <> · <button className="lnk" onClick={onRetry}>تلاش دوباره</button></>}
     </div>
   );
 }
 
-export const Empty = ({ title, hint }: { title: string; hint?: string }) => (
-  <div className="empty"><b>{title}</b>{hint && <div className="faint tiny">{hint}</div>}</div>
+const EMPTY_ICON = {
+  inbox: "M4 13l2.5-7h11L20 13M4 13v5h16v-5M4 13h4.5l1 2h5l1-2H20",
+  search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-4.3-4.3",
+  list: "M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01",
+  lock: "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+} as const;
+
+/** Empty state: what is missing and, in the hint, who can change that. */
+export const Empty = ({ title, hint, icon = "list" }: { title: string; hint?: string; icon?: keyof typeof EMPTY_ICON }) => (
+  <div className="empty">
+    <span className="empty-i"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d={EMPTY_ICON[icon]} /></svg></span>
+    <b>{title}</b>{hint && <div className="mut">{hint}</div>}
+  </div>
 );
 
 /** Shown while the system has no active cycle (a fresh install, or between cycles). */
 export function NoCycle() {
   return (
     <div className="empty">
-      <b>چرخهٔ فعالی وجود ندارد</b>
-      <div className="faint tiny">مدیر سیستم باید در «مدیریت ← چرخه و جلسه‌ها» یک چرخه بسازد و فعال کند؛ پیش از آن واحدها و کاربران را تعریف کنید.</div>
+      <span className="empty-i"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d={EMPTY_ICON.list} /></svg></span>
+      <b>دورهٔ فعالی وجود ندارد</b>
+      <div className="mut">مدیر سیستم باید در «مدیریت ← چرخه و جلسه‌ها» یک چرخه بسازد و فعال کند؛ پیش از آن واحدها و کاربران را تعریف کنید.</div>
       <a className="btn o" href="/admin/units" style={{ marginTop: 12 }}>رفتن به مدیریت</a>
     </div>
   );
@@ -55,3 +67,18 @@ export const Crumb = ({ items }: { items: string[] }) => (
 );
 
 export const Icon = ({ d }: { d: string }) => <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>;
+
+/** Product mark: an objective ring with its key result at the centre. Uses the accent colour. */
+export const Mark = () => (
+  <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
+    <rect width="32" height="32" rx="8" fill="currentColor" />
+    <circle cx="16" cy="16" r="9" fill="none" stroke="var(--on-accent)" strokeWidth="2.4" />
+    <circle cx="16" cy="16" r="4.2" fill="none" stroke="var(--on-accent)" strokeWidth="2.4" />
+    <circle cx="16" cy="16" r="1.3" fill="var(--on-accent)" />
+  </svg>
+);
+
+/** The product owner's signature. Organisation branding never removes it (docs/07 §7). */
+export const Signature = () => <div className="sig" title="طراحی و توسعه">A.G</div>;
+
+export const APP_VERSION = __APP_VERSION__;

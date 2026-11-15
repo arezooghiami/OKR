@@ -145,7 +145,7 @@ export function SimulatorPanel() {
       <div>
         {err && <ErrorBox message={err} />}
         {res && <div className="card" style={{ borderColor: res.allowed ? "var(--ok)" : "var(--bad)" }} role="status">
-          <div className={res.allowed ? "ok" : "bad"} style={{ fontSize: 26, fontWeight: 700 }}>{res.allowed ? "مجاز" : "ممنوع"}</div>
+          <div className={res.allowed ? "ok" : "bad"} style={{ fontSize: "var(--fs-2xl)", fontWeight: 700 }}>{res.allowed ? "مجاز" : "ممنوع"}</div>
           <div className="mut" style={{ marginTop: 6, lineHeight: 2 }}>{res.reason}</div>
           <div className="frm" style={{ marginTop: 12 }}>rule={res.rule}</div></div>}
       </div>

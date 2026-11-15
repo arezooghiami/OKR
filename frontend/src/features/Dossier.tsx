@@ -29,7 +29,7 @@ export function DossierList() {
       <div className="mh"><div><h1>پروندهٔ واحدها</h1><p className="faint">همهٔ اطلاعات و تاریخچهٔ هر واحد: اعضا، کارنامهٔ دوره‌ها، مقدار هر KR در هر پایش و همهٔ تغییرات.</p></div></div>
       <input className="srch dos-q" autoFocus placeholder="جستجوی نام واحد…" aria-label="جستجوی واحد" value={q} onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && rows[0] && nav(`/units/${rows[0].id}`)} />
-      {rows.length === 0 && <Empty title="واحدی با این نام پیدا نشد" />}
+      {rows.length === 0 && <Empty icon="search" title="واحدی با این نام پیدا نشد" hint="بخش کوتاه‌تری از نام واحد را امتحان کنید." />}
       <div className="dos-list">
         {rows.map((u) => {
           const st = u.o ? statusFor(u.o.latest_score) : null;
@@ -60,14 +60,14 @@ function Cell({ v }: { v: DossierKR["values"][number] }) {
 
 function Scorecard({ cycles, selected, onPick }: { cycles: DossierCycle[]; selected?: string; onPick: (id: string) => void }) {
   return (
-    <div className="imp-wrap">
-      <table className="imp-t dos-t">
+    <div className="tw">
+      <table className="dt dos-t">
         <thead><tr><th>دوره</th><th>اهداف · KR</th><th>پایش‌ها</th><th>آخرین امتیاز</th></tr></thead>
         <tbody>
           {cycles.map((c) => (
             <tr key={c.id} className={c.id === selected ? "on" : undefined} onClick={() => onPick(c.id)} style={{ cursor: "pointer" }}>
               <td><b>{c.name}</b><div className="faint tiny">{c.status === "active" ? "جاری" : "بسته"} · {jDate(c.starts_on)} تا {jDate(c.ends_on)}</div></td>
-              <td className="num">{fa(c.objectives)} · {fa(c.krs)}</td>
+              <td className="num">{fa(c.objectives)}، {fa(c.krs)}</td>
               <td>
                 <div className="dos-rounds">
                   {c.rounds.filter((r) => r.kind !== "start").map((r) => (
@@ -97,8 +97,8 @@ function Matrix({ d }: { d: DossierT }) {
       {archivedCount > 0 && (
         <label className="dos-toggle"><input type="checkbox" checked={deleted} onChange={(e) => setDeleted(e.target.checked)} /> نمایش {fa(archivedCount)} KR حذف‌شده</label>
       )}
-      <div className="imp-wrap">
-        <table className="imp-t dos-m">
+      <div className="tw">
+        <table className="dt dos-m">
           <thead><tr><th>KR</th><th>مبنا</th><th>هدف</th>{d.review_labels.map((l) => <th key={l}>{l}</th>)}<th>آخرین</th></tr></thead>
           <tbody>
             {objs.map((o) => (
@@ -204,8 +204,8 @@ export default function Dossier() {
 
           <section className="dos-sec">
             <h2>جلسه‌ها · {sel.name}</h2>
-            <div className="imp-wrap">
-              <table className="imp-t">
+            <div className="tw">
+              <table className="dt">
                 <thead><tr><th>جلسه</th><th>زمان</th><th>وضعیت</th><th>ثبت مقدار</th><th>امتیاز</th></tr></thead>
                 <tbody>
                   {sel.rounds.map((r) => (

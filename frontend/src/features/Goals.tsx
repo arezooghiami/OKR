@@ -17,12 +17,12 @@ function Goal({ g, open, onToggle, unlinked }: { g: GoalBlock; open: boolean; on
           <b>{g.title}</b>
           <span className="faint tiny">
             {g.krs
-              ? `${fa(g.krs)} نتیجهٔ کلیدی در ${fa(g.objectives)} هدف از ${fa(units)} واحد · ${fa(g.recorded)} مورد مقدار ثبت‌شده دارد`
+              ? `${fa(g.krs)} نتیجهٔ کلیدی در ${fa(g.objectives)} هدف از ${fa(units)} واحد، ${fa(g.recorded)} مورد مقدار ثبت‌شده دارد`
               : unlinked ? "همهٔ نتایج کلیدی به یک هدف کلان وصل‌اند." : "هنوز هیچ نتیجهٔ کلیدی‌ای به این هدف وصل نشده است."}
           </span>
         </span>
         {!unlinked && <span className="gl-p">{g.progress != null ? <><b className={STATUS_CLASS[statusFor(g.progress)]}>{pct(g.progress)}</b><Bar p={g.progress} /></> : <span className="faint tiny">بدون مقدار</span>}</span>}
-        {g.krs > 0 && <span className="gl-chev" aria-hidden="true">{open ? "−" : "+"}</span>}
+        {g.krs > 0 && <svg className="gl-chev i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>}
       </button>
       {open && (
         <div className="gl-b">
@@ -86,7 +86,7 @@ export default function Goals() {
       </div>
       {total > 0 && (
         <p className="gl-sum">{fa(linked)} از {fa(total)} نتیجهٔ کلیدی این دوره به یک هدف کلان وصل‌اند
-          {data.unlinked.krs > 0 && <span className="risk"> · {fa(data.unlinked.krs)} مورد وصل نیست</span>}.</p>
+          {data.unlinked.krs > 0 && <span className="risk">، {fa(data.unlinked.krs)} مورد وصل نیست</span>}.</p>
       )}
       {data.goals.length === 0 && <Empty title="هنوز هدف کلانی تعریف نشده است" hint="مدیر سیستم از «راه‌اندازی ← اهداف کلان» آن‌ها را تعریف می‌کند." />}
       <div className="gls">

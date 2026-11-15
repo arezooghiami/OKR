@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useGet } from "../api/typed";
 import type { Overview } from "../api/types";
 import { isOrgWide, useAuth } from "../auth/AuthContext";
-import { Icon } from "./parts";
+import { APP_VERSION, Icon, Mark, Signature } from "./parts";
 import { PeekProvider } from "./Peek";
 
 function useTheme() {
@@ -11,7 +11,7 @@ function useTheme() {
     try { return (localStorage.getItem("okr.theme") ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark"; } catch { return false; }
   });
   useEffect(() => {
-    document.documentElement.dataset.theme = dark ? "dark" : "";
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
     try { localStorage.setItem("okr.theme", dark ? "dark" : "light"); } catch { /* ignore */ }
   }, [dark]);
   return [dark, () => setDark((d) => !d)] as const;
@@ -41,8 +41,8 @@ export default function Layout() {
       <div className="shell">
         <aside className="side" aria-label="منوی اصلی">
           <NavLink className="brand" to="/">
-            <i aria-hidden="true">O</i>
-            <span><b>پایش OKR</b><small>{cycle.data?.name ?? (cycle.status === 404 ? "بدون چرخهٔ فعال" : "…")}</small></span>
+            <Mark />
+            <span><b>OKR</b><small>{cycle.data?.name ?? (cycle.status === 404 ? "بدون دورهٔ فعال" : "…")}</small></span>
           </NavLink>
           <nav>
             {groups.map((g) => (
@@ -50,12 +50,13 @@ export default function Layout() {
                 <div className="ngt">{g.title}</div>
                 {g.items.map((it) => (
                   <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => `ni ${(it.match ? it.match(pathname) : isActive) ? "on" : ""} ${it.wide ? "wide" : ""}`}>
-                    <Icon d={it.icon} /><span>{it.label}</span>
+                    <Icon d={it.icon} /><span className="long">{it.label}</span><span className="short" aria-hidden="true">{it.short}</span>
                   </NavLink>
                 ))}
               </div>
             ))}
           </nav>
+          <Signature />
         </aside>
         <div className="main">
           <header className="bar">
@@ -72,7 +73,7 @@ export default function Layout() {
   );
 }
 
-type NavItem = { to: string; label: string; icon: string; end?: boolean; wide?: boolean; match?: (path: string) => boolean };
+type NavItem = { to: string; label: string; short: string; icon: string; end?: boolean; wide?: boolean; match?: (path: string) => boolean };
 const I = {
   dash: "M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z",
   unit: "M4 21V6l8-3v18M12 21V9l8 3v9M3 21h18M8 9v.01M8 13v.01M8 17v.01M16 15v.01",
@@ -86,14 +87,15 @@ const I = {
 
 /** Menu by role: KR owners start from their own KRs, unit managers from their unit, org-wide roles from the dashboard. */
 function navFor(orgWide: boolean, admin: boolean): { title: string; items: NavItem[] }[] {
-  const mine: NavItem = { to: "/my", label: "KRهای من", icon: I.mine };
+  // `short` is the one-word label of the phone bottom bar
+  const mine: NavItem = { to: "/my", label: "KRهای من", short: "کار من", icon: I.mine };
   const groups = orgWide
-    ? [{ title: "سازمان", items: [{ to: "/", label: "داشبورد سازمان", icon: I.dash, end: true }, { to: "/unit", label: "واحدها", icon: I.unit }, { to: "/units", label: "پروندهٔ واحدها", icon: I.file },
-        { to: "/session", label: "جلسه‌های پایش", icon: I.meet }, { to: "/goals", label: "اهداف کلان", icon: I.tree, wide: true }] },
+    ? [{ title: "سازمان", items: [{ to: "/", label: "داشبورد سازمان", short: "داشبورد", icon: I.dash, end: true }, { to: "/unit", label: "واحدها", short: "واحدها", icon: I.unit }, { to: "/units", label: "پروندهٔ واحدها", short: "پرونده", icon: I.file },
+        { to: "/session", label: "جلسه‌های پایش", short: "جلسه", icon: I.meet }, { to: "/goals", label: "اهداف کلان", short: "اهداف", icon: I.tree, wide: true }] },
        { title: "کار من", items: [mine] }]
-    : [{ title: "کار من", items: [mine, { to: "/unit", label: "واحد من", icon: I.unit }, { to: "/session", label: "جلسهٔ پایش", icon: I.meet }] },
-       { title: "سازمان", items: [{ to: "/overview", label: "داشبورد سازمان", icon: I.dash }, { to: "/units", label: "پروندهٔ واحد", icon: I.file }, { to: "/goals", label: "اهداف کلان", icon: I.tree, wide: true }] }];
-  if (admin) groups.push({ title: "مدیریت", items: [{ to: "/admin", label: "راه‌اندازی و تنظیمات", icon: I.admin, wide: true, match: (p) => p.startsWith("/admin") && !p.startsWith("/admin/import") }, { to: "/admin/import", label: "ورود از اکسل", icon: I.upload, wide: true }] });
+    : [{ title: "کار من", items: [mine, { to: "/unit", label: "واحد من", short: "واحد", icon: I.unit }, { to: "/session", label: "جلسهٔ پایش", short: "جلسه", icon: I.meet }] },
+       { title: "سازمان", items: [{ to: "/overview", label: "داشبورد سازمان", short: "داشبورد", icon: I.dash }, { to: "/units", label: "پروندهٔ واحد", short: "پرونده", icon: I.file }, { to: "/goals", label: "اهداف کلان", short: "اهداف", icon: I.tree, wide: true }] }];
+  if (admin) groups.push({ title: "مدیریت", items: [{ to: "/admin", label: "راه‌اندازی و تنظیمات", short: "مدیریت", icon: I.admin, wide: true, match: (p) => p.startsWith("/admin") && !p.startsWith("/admin/import") }, { to: "/admin/import", label: "ورود از اکسل", short: "اکسل", icon: I.upload, wide: true }] });
   return groups;
 }
 
@@ -114,7 +116,8 @@ function AccountMenu({ name, admin, onSignOut }: { name: string; admin: boolean;
       {open && (
         <div className="menu" role="menu">
           <div className="who"><b>{name}</b>{admin && <span className="faint tiny">مدیر سیستم</span>}</div>
-          <button role="menuitem" className="it" onClick={() => { setOpen(false); onSignOut(); }}>خروج از حساب</button>
+          <button role="menuitem" className="it danger" onClick={() => { setOpen(false); onSignOut(); }}>خروج از حساب</button>
+          <div className="about"><span>OKR نسخهٔ {APP_VERSION}</span><span>A.G</span></div>
         </div>
       )}
     </div>

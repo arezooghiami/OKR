@@ -73,7 +73,7 @@ export default function KRForm({ ctx, kr, objectiveId, onDone }: { ctx: KRContex
       <div className="f"><label htmlFor="ow">مسئول KR</label>
         <select id="ow" value={owner} disabled={readOnly} onChange={(e) => setOwner(e.target.value)}><option value="">— بدون مسئول —</option>{(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}</select>
         {members.data && members.data.length === 0 && <span className="faint tiny">این واحد هنوز عضوی ندارد؛ در مدیریت ← کاربران، کاربر را به واحد اضافه کنید.</span>}</div>
-      {err && <div className="note" role="alert" style={{ color: "var(--bad)" }}>{err}</div>}
+      {err && <div className="note err-box" role="alert">{err}</div>}
       <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
         <button className="btn" onClick={submit} disabled={busy || readOnly}>{busy ? "…" : "ذخیره"}</button>
         <button className="btn o" onClick={onDone}>انصراف</button>

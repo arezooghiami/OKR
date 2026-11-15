@@ -47,7 +47,7 @@ export default function ObjectiveForm({ unitId, unitName, objective, sessionId, 
         {members.data && members.data.length === 0 && <span className="faint tiny">این واحد هنوز عضوی ندارد؛ مدیر سیستم باید کاربران را به واحد اضافه کند.</span>}
       </div>
       {!isNew && <div className="note">ذخیره، نسخهٔ تازه‌ای از تعریف می‌سازد و نسخهٔ قبلی در تاریخچه می‌ماند.</div>}
-      {err && <div className="note" role="alert" style={{ color: "var(--bad)" }}>{err}</div>}
+      {err && <div className="note err-box" role="alert">{err}</div>}
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
         <button className="btn" disabled={busy || !title.trim()} onClick={submit}>{busy ? "…" : isNew ? "افزودن هدف" : "ذخیره"}</button>
         <button className="btn o" onClick={onDone}>انصراف</button>

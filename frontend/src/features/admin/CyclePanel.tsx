@@ -43,7 +43,7 @@ function NewCycleForm({ onDone }: { onDone: () => void }) {
       <div className="sec" style={{ marginTop: 14 }}><h2>نقطه‌های زمانی <span className="num">{fa(tps.length)}</span></h2></div>
       {tps.map((p, i) => (
         <div key={i} className="two" style={{ marginTop: 6 }}>
-          <input aria-label="برچسب" value={p.label} onChange={(e) => setLabels(tps.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} style={{ padding: "6px 10px", border: "1px solid var(--line2)", borderRadius: 9, background: "var(--bg)" }} />
+          <input aria-label="برچسب" value={p.label} onChange={(e) => setLabels(tps.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} style={{ padding: "6px 10px", border: "1px solid var(--line-strong)", borderRadius: 8, background: "var(--surface)" }} />
           <span className="faint tiny" style={{ alignSelf: "center" }}>{KIND_LABEL[p.kind]}</span>
         </div>
       ))}
@@ -63,7 +63,7 @@ function CycleCard({ c, onChange }: { c: CycleAdmin; onChange: () => void }) {
     <div className="card">
       <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ flex: 1 }}><b style={{ fontSize: 15 }}>{c.name}</b> <span className="lvl">{STATUS_LABEL[c.status] ?? c.status}</span>
-          <div className="faint tiny">{jDate(c.starts_on)} تا {jDate(c.ends_on)} · {fa(c.sessions_total)} جلسه، {fa(c.sessions_held)} برگزارشده، {fa(c.sessions_unscheduled)} بدون زمان</div></div>
+          <div className="faint tiny">{jDate(c.starts_on)} تا {jDate(c.ends_on)}، {fa(c.sessions_total)} جلسه، {fa(c.sessions_held)} برگزارشده، {fa(c.sessions_unscheduled)} بدون زمان</div></div>
         {c.status === "draft" && <button className="btn" disabled={a.busy} onClick={() => setStatus("active")}>فعال‌سازی</button>}
         {c.status === "active" && <button className="btn o" disabled={a.busy} onClick={() => window.confirm("چرخه بسته شود؟ دوباره باز نمی‌شود.") && setStatus("closed")}>بستن چرخه</button>}
       </div>
@@ -126,9 +126,9 @@ function Schedule({ cycle }: { cycle: CycleAdmin }) {
   return (
     <>
       <div className="sec" style={{ marginTop: 22 }}><h2>زمان‌بندی جلسه‌ها · {cycle.name}</h2></div>
-      <div className="steps" style={{ margin: "0 0 10px" }} role="tablist">
+      <div className="seg" style={{ margin: "0 0 12px" }} role="tablist">
         {cycle.time_points.map((t) => (
-          <button key={t.id} role="tab" aria-selected={t.id === tp} onClick={() => setTp(t.id)} style={{ padding: "3px 13px", borderRadius: 99, border: "1px solid var(--line)", fontSize: 14, ...(t.id === tp ? { background: "var(--ac)", color: "var(--on-ac)", borderColor: "transparent", fontWeight: 600 } : { color: "var(--mut)" }) }}>{t.label}</button>))}
+          <button key={t.id} role="tab" aria-selected={t.id === tp} className={t.id === tp ? "on" : ""} onClick={() => setTp(t.id)}>{t.label}</button>))}
       </div>
       {missing > 0 && <div className="warnbar" role="status"><b>{fa(missing)} واحد بدون زمان جلسه.</b> تا زمان‌بندی نشود، ثبت مقدار برای آن واحد باز نمی‌شود.</div>}
       {(rows.data ?? []).length === 0 && !rows.loading && <Empty title="جلسه‌ای نیست" hint="ابتدا واحد تعریف کنید؛ جلسه‌ها خودکار ساخته می‌شوند." />}
@@ -152,7 +152,7 @@ export default function CyclePanel() {
       <div className="sec"><h2>چرخه‌ها <span className="num">{fa(list.length)}</span></h2><button className="btn" onClick={create}>+ چرخهٔ جدید</button></div>
       {list.length === 0 && <Empty title="هنوز چرخه‌ای تعریف نشده است" hint="اول واحدها را تعریف کنید، بعد چرخه بسازید و فعالش کنید." />}
       {list.map((c) => (
-        <div key={c.id} onClick={() => setSel(c.id)} style={{ outline: current?.id === c.id && list.length > 1 ? "2px solid var(--ac)" : undefined, borderRadius: 16 }}>
+        <div key={c.id} onClick={() => setSel(c.id)} className={current?.id === c.id && list.length > 1 ? "picked" : undefined}>
           <CycleCard c={c} onChange={cycles.reload} />
         </div>
       ))}

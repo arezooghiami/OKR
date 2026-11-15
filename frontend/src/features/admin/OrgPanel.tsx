@@ -12,7 +12,7 @@ function Node({ n, depth }: { n: OrgNode; depth: number }) {
       <div className={`n ${open ? "open" : ""}`} role={kids ? "button" : undefined} tabIndex={0} aria-expanded={kids ? open : undefined}
         onClick={() => kids && setOpen(!open)} onKeyDown={(e) => kids && (e.key === "Enter" || e.key === " ") && setOpen(!open)}>
         <svg className="i ch" viewBox="0 0 24 24" style={{ opacity: kids ? 1 : 0 }} aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-        <div style={{ flex: 1, minWidth: 0 }}><div className="nm">{n.name}</div><div className="fa">{n.manager ? `مدیر: ${n.manager}` : "بدون مدیر"}{kids && ` · ${fa(n.children.length)} زیرواحد`}</div></div>
+        <div style={{ flex: 1, minWidth: 0 }}><div className="nm">{n.name}</div><div className="fa">{n.manager ? `مدیر: ${n.manager}` : "بدون مدیر"}{kids && `، ${fa(n.children.length)} زیرواحد`}</div></div>
         {n.type && <Tag color={n.type_color ?? "--g0"}>{n.type}</Tag>}
       </div>
       {kids && <div className={`kids ${open ? "open" : ""}`}>{n.children.map((c) => <Node key={c.id} n={c} depth={depth + 1} />)}</div>}
