@@ -43,7 +43,7 @@ def cycle_out(db: Session, cycle: Cycle) -> dict:  # shape: schemas.out.CycleOut
 def current_cycle(db: Session = Depends(get_db), acc: Access = Depends(access)):
     cycle = db.scalars(select(Cycle).where(Cycle.status == "active")).first()
     if not cycle:
-        raise HTTPException(404, "چرخهٔ فعالی وجود ندارد")
+        raise HTTPException(404, "دورهٔ فعالی وجود ندارد")
     return cycle_out(db, cycle)
 
 
@@ -106,6 +106,7 @@ def session_page(session_id: uuid.UUID, db: Session = Depends(get_db), acc: Acce
         "can_edit_values": can_edit and rev.entry_blocker(db, s) is None,
         "can_edit_definitions": acc.can("key_result", "edit", s.unit_id)
         and db.get(Cycle, db.get(TimePoint, s.time_point_id).cycle_id).status != "closed",
+        "can_hold": acc.can("session", "approve", s.unit_id) and s.status != "held",
         "score": rev.unit_score(blocks),
         "objectives": [{
             "id": b.objective.id, "number": b.objective.number, "title": b.version.title, "score": b.score,
@@ -151,22 +152,58 @@ def schedule(session_id: uuid.UUID, body: ScheduleIn, request: Request, db: Sess
 
 
 class HoldIn(BaseModel):
-    held_at: datetime | None = None  # backdating is system-admin only
+    held_at: datetime | None = None  # backdating is super-admin only
+
+
+def _hold_one(db: Session, acc: Access, s: UnitSession, held_at: datetime | None) -> None:
+    """«برگزار شد» freezes the round for the unit. Who may do it is the session/approve permission
+    (the system manager by default; the super admin can grant it to other roles)."""
+    require(acc, "session", "approve", s.unit_id)
+    if held_at is not None and not acc.user.is_system_admin:
+        raise HTTPException(403, "ثبت برگزاری با تاریخ گذشته فقط با سوپر ادمین است")
+    require_open_cycle(db, db.get(TimePoint, s.time_point_id).cycle_id)
+    try:
+        rev.hold_session(db, session=s, actor_id=acc.user.id, held_at=held_at, backdated=bool(held_at))
+    except rev.SessionLocked as e:
+        raise HTTPException(409, str(e)) from e
 
 
 @router.post("/sessions/{session_id}/hold", response_model=SessionHead)
 def hold(session_id: uuid.UUID, body: HoldIn, db: Session = Depends(get_db), acc: Access = Depends(access)):
     s = get_session_or_404(db, session_id)
-    # marking a session held freezes that round for the unit: only the system administrator does it
-    if not acc.user.is_system_admin:
-        raise HTTPException(403, "فقط مدیر سیستم می‌تواند برگزاری جلسه را ثبت کند")
-    require_open_cycle(db, db.get(TimePoint, s.time_point_id).cycle_id)
-    try:
-        rev.hold_session(db, session=s, actor_id=acc.user.id, held_at=body.held_at, backdated=bool(body.held_at))
-    except rev.SessionLocked as e:
-        raise HTTPException(409, str(e)) from e
+    _hold_one(db, acc, s, body.held_at)
     db.commit()
     return session_head(db, s)
+
+
+class HoldManyIn(BaseModel):
+    session_ids: list[uuid.UUID]
+
+
+class HoldManyResult(BaseModel):
+    session_id: uuid.UUID
+    ok: bool
+    error: str | None = None
+
+
+@router.post("/sessions/hold", response_model=list[HoldManyResult])
+def hold_many(body: HoldManyIn, db: Session = Depends(get_db), acc: Access = Depends(access)):
+    """Mark several sessions held at once (e.g. every unit's R1 after the review week). Each session is
+    checked and committed on its own, so one refusal does not undo the others."""
+    out = []
+    for sid in dict.fromkeys(body.session_ids):
+        s = db.get(UnitSession, sid)
+        if s is None:
+            out.append({"session_id": sid, "ok": False, "error": "جلسه پیدا نشد"})
+            continue
+        try:
+            _hold_one(db, acc, s, None)
+            db.commit()
+            out.append({"session_id": sid, "ok": True})
+        except HTTPException as e:
+            db.rollback()
+            out.append({"session_id": sid, "ok": False, "error": str(e.detail)})
+    return out
 
 
 class EntryIn(BaseModel):

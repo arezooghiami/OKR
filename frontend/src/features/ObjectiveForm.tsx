@@ -6,7 +6,7 @@ import { fa } from "../domain/format";
 export interface ObjectiveDraft { id: string; number: number; title: string; description: string | null; owner_id: string | null; definition_version?: number }
 
 /**
- * Create or edit an objective of a unit, with its متصدی (owner). Creating opens version 1; every later edit
+ * Create or edit an objective of a unit, with its مسئول هدف (owner). Creating opens version 1; every later edit
  * creates a new version. `sessionId` tags the edit with the session it was made in.
  */
 export default function ObjectiveForm({ unitId, unitName, objective, sessionId, onDone }: {
@@ -38,13 +38,13 @@ export default function ObjectiveForm({ unitId, unitName, objective, sessionId, 
       {!isNew && objective.definition_version && <div style={{ marginTop: 4 }}><span className="lvl">نسخهٔ تعریف {fa(objective.definition_version)}</span></div>}
       <div className="f"><label htmlFor="ot">عنوان هدف</label><input id="ot" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus placeholder="مثلاً: تجربهٔ مشتری را متحول کنیم" /></div>
       <div className="f"><label htmlFor="od">توضیحات</label><textarea id="od" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="چرا این هدف مهم است؟" /></div>
-      <div className="f"><label htmlFor="oo">متصدی هدف</label>
+      <div className="f"><label htmlFor="oo">مسئول هدف</label>
         <select id="oo" value={owner} onChange={(e) => setOwner(e.target.value)}>
-          <option value="">— بدون متصدی —</option>
+          <option value="">— بدون مسئول هدف —</option>
           {(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
         </select>
         <span className="faint tiny">کسی که پیگیر کل این هدف است و در جلسه دربارهٔ آن پاسخ می‌دهد.</span>
-        {members.data && members.data.length === 0 && <span className="faint tiny">این واحد هنوز عضوی ندارد؛ مدیر سیستم باید کاربران را به واحد اضافه کند.</span>}
+        {members.data && members.data.length === 0 && <span className="faint tiny">این واحد هنوز عضوی ندارد؛ سوپر ادمین باید کاربران را به واحد اضافه کند.</span>}
       </div>
       {!isNew && <div className="note">ذخیره، نسخهٔ تازه‌ای از تعریف می‌سازد و نسخهٔ قبلی در تاریخچه می‌ماند.</div>}
       {err && <div className="note err-box" role="alert">{err}</div>}

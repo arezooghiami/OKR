@@ -365,3 +365,20 @@
   /* admin: the cycle whose sessions are being scheduled */
   .picked>.card{border-color:var(--line-strong);box-shadow:inset -3px 0 0 var(--accent)}
 }
+
+@layer screens {
+  /* unit sheet: bulk owner assignment */
+  .ownbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 8px;padding:8px 16px;min-height:var(--row-min);border-radius:var(--r-md);background:var(--selected);border:1px solid var(--line-strong)}
+  .ownbar.quiet{background:transparent;border-color:transparent;padding-inline:4px;font-size:var(--fs-sm)}
+  .ownbar select{min-height:36px;min-width:200px;padding:4px 8px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--surface)}
+  .xl .xcodec{display:flex;gap:6px;align-items:center}
+  .pickbox{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex:none}
+}
+
+@layer screens {
+  /* dashboard: bulk «برگزار شد» panel */
+  .hold-row{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:12px;align-items:center;min-height:var(--row-min);padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+  .hold-row:hover{background:var(--hover)}
+  .hold-all{margin-top:12px;border-bottom-color:var(--line-strong)}
+  .hold-u{display:grid;gap:0;min-width:0}
+}

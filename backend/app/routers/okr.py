@@ -47,7 +47,7 @@ def create_objective(unit_id: uuid.UUID, body: ObjectiveIn, db: Session = Depend
     require(acc, "objective", "create", unit_id)
     cycle = db.scalars(select(Cycle).where(Cycle.status == "active")).first()
     if not cycle:
-        raise HTTPException(409, "چرخهٔ فعالی وجود ندارد")
+        raise HTTPException(409, "دورهٔ فعالی وجود ندارد")
     obj = svc.create_objective(db, cycle_id=cycle.id, unit_id=unit_id, actor_id=acc.user.id, data=body.model_dump())
     db.commit()
     return {"id": obj.id, "number": obj.number}
@@ -78,6 +78,8 @@ def create_kr(objective_id: uuid.UUID, body: KRIn, db: Session = Depends(get_db)
     require_open_cycle(db, obj.cycle_id)
     sess = db.get(UnitSession, body.session_id) if body.session_id else None
     data = body.model_dump(exclude={"session_id"})
+    if data["owner_id"] is None:  # default owner: whoever owns the objective (docs/07 phase 2)
+        data["owner_id"] = svc.current_objective_version(db, obj.id).owner_id
     try:
         kr = svc.create_kr(db, objective=obj, actor_id=acc.user.id, data=data,
                            context=svc.edit_context(db, obj.cycle_id, obj.unit_id, sess),
@@ -86,6 +88,42 @@ def create_kr(objective_id: uuid.UUID, body: KRIn, db: Session = Depends(get_db)
         raise HTTPException(422, str(e)) from e
     db.commit()
     return {"id": kr.id, "code": f"{obj.number}.{kr.number}"}
+
+
+class OwnerBulkIn(BaseModel):
+    key_result_ids: list[uuid.UUID]
+    owner_id: uuid.UUID | None  # None = clear the owner
+
+
+class OwnerBulkOut(BaseModel):
+    changed: int
+    unchanged: int
+
+
+@router.post("/units/{unit_id}/key-results/owner", response_model=OwnerBulkOut)
+def set_owner_bulk(unit_id: uuid.UUID, body: OwnerBulkIn, db: Session = Depends(get_db), acc: Access = Depends(access)):
+    """Give many KRs of one unit the same owner in one step (e.g. right after an Excel import).
+    Each change is a normal new definition version with its audit record."""
+    require(acc, "key_result", "edit", unit_id)
+    if body.owner_id is not None:
+        u = db.get(User, body.owner_id)
+        if u is None or not u.is_active:
+            raise HTTPException(422, "کاربر انتخاب‌شده فعال نیست")
+    krs = db.scalars(select(KeyResult).join(Objective, Objective.id == KeyResult.objective_id)
+                     .where(KeyResult.id.in_(body.key_result_ids), Objective.unit_id == unit_id,
+                            KeyResult.archived_at.is_(None))).all()
+    if len(krs) != len(set(body.key_result_ids)):
+        raise HTTPException(422, "بعضی نتیجه‌های کلیدی پیدا نشدند یا به این واحد تعلق ندارند")
+    changed = 0
+    for kr in krs:
+        obj = db.get(Objective, kr.objective_id)
+        require_open_cycle(db, obj.cycle_id)
+        _, diff = svc.update_kr(db, kr=kr, actor_id=acc.user.id, changes={"owner_id": body.owner_id},
+                                expected_version=None, reason="تعیین مسئول گروهی",
+                                context=svc.edit_context(db, obj.cycle_id, unit_id, None))
+        changed += bool(diff)
+    db.commit()
+    return {"changed": changed, "unchanged": len(krs) - changed}
 
 
 class KRPatch(BaseModel):
@@ -229,7 +267,7 @@ def my_key_results(db: Session = Depends(get_db), acc: Access = Depends(access))
                                         "unit_name": db.get(Unit, unit_id).name, "key_results": []})
         block["key_results"].append({
             "id": kr.id, "code": f"{obj.number}.{kr.number}", "title": cur.title, "baseline": cur.baseline,
-            "target": cur.target, "session_id": sess.id if sess else None, "value": e.value if e else None,
+            "target": cur.target, "range_min": cur.range_min, "range_max": cur.range_max, "session_id": sess.id if sess else None, "value": e.value if e else None,
             "entry_version": e.version if e else None, "percent": p, "status": status_for(p).value,
             "editable": blocker is None, "kind": cur.kind, "unit_of_measure": cur.unit_of_measure,
             "note": e.note if e else None, "round": tp.label if tp else None, "round_at": sess.scheduled_at if sess else None,

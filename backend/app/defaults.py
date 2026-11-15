@@ -10,11 +10,20 @@ RES_KEYS = {"org": "objective", "kr": "key_result", "val": "review_value", "mt":
 SCOPE_NAMES = ["unit", "unit_tree", "all"]
 
 # role -> (description, matrix, scopes). Matrix string per resource follows ACT_ORDER: a=allow d=deny -=undefined.
+# The five standard roles of docs/07 §7. «برگزار شد» = session/approve, given to the system manager by default.
+SUPER_ADMIN, SYSTEM_MANAGER, SYSTEM_EXPERT, UNIT_MANAGER, UNIT_EXPERT = (
+    "سوپر ادمین", "مدیر سامانه", "کارشناس سامانه", "مدیر واحد", "کارشناس واحد")
 ROLES = {
-    "ادمین سیستم": ("مدیریت ساختار و دسترسی", {"org": "aaaaa", "kr": "aaaaa", "val": "aadda", "mt": "aaaaa", "rp": "aaddd", "us": "aaaad"}, [2] * 6),
-    "مدیر واحد": ("مدیر یک واحد و زیرمجموعه‌ها", {"org": "aaaaa", "kr": "aaaaa", "val": "aaada", "mt": "aaadd", "rp": "adddd", "us": "adddd"}, [1, 1, 1, 1, 1, 0]),
-    "مسئول KR": ("ثبت مقدار برای KRهای خود", {"org": "adddd", "kr": "aadd-", "val": "aaadd", "mt": "adddd", "rp": "adddd", "us": "ddddd"}, [0] * 6),
-    "ناظر": ("فقط مشاهده در سطح سازمان", {"org": "adddd", "kr": "adddd", "val": "adddd", "mt": "adddd", "rp": "aaddd", "us": "ddddd"}, [2, 2, 2, 2, 2, 0]),
+    SUPER_ADMIN: ("همهٔ تعریف‌ها، ورود داده، دسترسی‌ها، برند و لایسنس",
+                  {"org": "aaaaa", "kr": "aaaaa", "val": "aaaaa", "mt": "aaaaa", "rp": "aaaaa", "us": "aaaaa"}, [2] * 6),
+    SYSTEM_MANAGER: ("مسئول OKR سازمان: همهٔ واحدها، گزارش‌ها، جلسه‌ها و «برگزار شد»",
+                     {"org": "adddd", "kr": "adddd", "val": "aaadd", "mt": "aaada", "rp": "aaddd", "us": "adddd"}, [2] * 6),
+    SYSTEM_EXPERT: ("بررسی همهٔ واحدها، بدون حذف",
+                    {"org": "adddd", "kr": "adddd", "val": "adddd", "mt": "adddd", "rp": "aaddd", "us": "ddddd"}, [2, 2, 2, 2, 2, 0]),
+    UNIT_MANAGER: ("تعریف هدف و نتیجهٔ کلیدی، تعیین مسئول و ثبت در واحد خود",
+                   {"org": "aaaaa", "kr": "aaaaa", "val": "aaada", "mt": "aaadd", "rp": "adddd", "us": "adddd"}, [1, 1, 1, 1, 1, 0]),
+    UNIT_EXPERT: ("ثبت مقدار نتیجه‌های کلیدی خود",
+                  {"org": "adddd", "kr": "aadd-", "val": "aaadd", "mt": "adddd", "rp": "adddd", "us": "ddddd"}, [0] * 6),
 }
 UNIT_TYPES = [("معاونت", "--g0"), ("مدیریت", "--g1"), ("تیم", "--g4")]
 

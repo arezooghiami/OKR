@@ -90,8 +90,7 @@ def entry_blocker(db: Session, session: UnitSession) -> str | None:
         return "این دوره بسته است و فقط‌خواندنی است"
     if session.status == "held":
         return "این جلسه برگزار شده و مقادیر آن منجمد است"
-    if session.status == "unscheduled":
-        return "برای این واحد زمان جلسه تعیین نشده است"
+    # a missing meeting time never blocks recording (docs/07 phase 2): owners record whenever they are ready
     prev = previous_session(db, session)
     if prev is not None and prev.status != "held":
         return "تب این پایش پس از «برگزار شد» جلسهٔ قبلی باز می‌شود"
@@ -125,8 +124,6 @@ def hold_session(db: Session, *, session: UnitSession, actor_id, held_at: dateti
     """Mark held; freeze definition version and percent of every counted KR for this round."""
     if session.status == "held":
         return session
-    if session.status == "unscheduled":
-        raise SessionLocked("جلسه‌ای که زمان ندارد نمی‌تواند برگزار شود")
     when = held_at or utcnow()
     session.status, session.held_at = "held", when
     session.version += 1

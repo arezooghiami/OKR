@@ -33,3 +33,19 @@ class RoleScope(Base, IdMixin):
     role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("role.id", ondelete="CASCADE"), index=True)
     resource: Mapped[str] = mapped_column(String(40))
     scope: Mapped[str] = mapped_column(String(20))  # unit | unit_tree | all
+
+
+class RoleUnitOverride(Base, IdMixin):
+    """A per-unit exception to a role's matrix (e.g. unit experts of «فروش» may edit but not delete).
+
+    Only the super admin sets these. For that unit the override replaces the role's own cell; elsewhere the
+    role's matrix applies. Scope is unchanged: an override never widens where the role reaches."""
+
+    __tablename__ = "role_unit_override"
+    __table_args__ = (UniqueConstraint("role_id", "unit_id", "resource", "action"),)
+
+    role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("role.id", ondelete="CASCADE"), index=True)
+    unit_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("unit.id", ondelete="CASCADE"), index=True)
+    resource: Mapped[str] = mapped_column(String(40))
+    action: Mapped[str] = mapped_column(String(40))
+    effect: Mapped[str] = mapped_column(String(10))  # allow | deny

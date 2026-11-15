@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -108,10 +109,19 @@ class MeOut(BaseModel):
     full_name: str
     is_system_admin: bool
     roles: list[RoleRef]
+    home: Literal["dashboard", "unit", "my"]  # first page after sign-in (docs/07 phase 2)
+    org_wide: bool  # sees every unit: gets the managers' menu
+    can_hold: bool  # may mark sessions «برگزار شد» somewhere
 
 
 @router.get("/me", response_model=MeOut)
 def me(user: User = Depends(current_user), db: Session = Depends(get_db), acc: Access = Depends(access)):
     roles = [{"role": g.role, "units": sorted(g.units)} for g in acc.grants]
+    org_wide = acc.visible_units("objective", "view") is None
+    defines = acc.visible_units("objective", "create")
+    hold = acc.visible_units("session", "approve")
+    # senior roles start on the dashboard, unit managers on their unit, everyone else on their own KRs
+    home = "dashboard" if org_wide else "unit" if defines else "my"
     return MeOut(id=user.id, username=user.username, full_name=user.full_name,
-                 is_system_admin=user.is_system_admin, roles=roles)
+                 is_system_admin=user.is_system_admin, roles=roles, home=home, org_wide=org_wide,
+                 can_hold=hold is None or bool(hold))

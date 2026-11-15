@@ -265,6 +265,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/roles/{role_id}/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Overrides
+         * @description Per-unit exceptions to this role's matrix.
+         */
+        get: operations["list_overrides_api_v1_admin_roles__role_id__overrides_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles/{role_id}/overrides/{unit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Override
+         * @description Replace this role's exceptions in one unit (only the super admin, docs/07 §7).
+         */
+        put: operations["put_override_api_v1_admin_roles__role_id__overrides__unit_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/setup": {
         parameters: {
             query?: never;
@@ -738,6 +778,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sessions/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hold Many
+         * @description Mark several sessions held at once (e.g. every unit's R1 after the review week). Each session is
+         *     checked and committed on its own, so one refusal does not undo the others.
+         */
+        post: operations["hold_many_api_v1_sessions_hold_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sessions/{session_id}": {
         parameters: {
             query?: never;
@@ -858,6 +919,27 @@ export interface paths {
         get: operations["export_unit_api_v1_units__unit_id__export_xlsx_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unit_id}/key-results/owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Owner Bulk
+         * @description Give many KRs of one unit the same owner in one step (e.g. right after an Excel import).
+         *     Each change is a normal new definition version with its audit record.
+         */
+        post: operations["set_owner_bulk_api_v1_units__unit_id__key_results_owner_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1550,6 +1632,23 @@ export interface components {
             /** Held At */
             held_at?: string | null;
         };
+        /** HoldManyIn */
+        HoldManyIn: {
+            /** Session Ids */
+            session_ids: string[];
+        };
+        /** HoldManyResult */
+        HoldManyResult: {
+            /** Error */
+            error?: string | null;
+            /** Ok */
+            ok: boolean;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
         /** IdOut */
         IdOut: {
             /**
@@ -1843,8 +1942,15 @@ export interface components {
         };
         /** MeOut */
         MeOut: {
+            /** Can Hold */
+            can_hold: boolean;
             /** Full Name */
             full_name: string;
+            /**
+             * Home
+             * @enum {string}
+             */
+            home: "dashboard" | "unit" | "my";
             /**
              * Id
              * Format: uuid
@@ -1852,6 +1958,8 @@ export interface components {
             id: string;
             /** Is System Admin */
             is_system_admin: boolean;
+            /** Org Wide */
+            org_wide: boolean;
             /** Roles */
             roles: components["schemas"]["RoleRef"][];
             /** Username */
@@ -1936,6 +2044,10 @@ export interface components {
             previous_round: string | null;
             /** Previous Value */
             previous_value: number | null;
+            /** Range Max */
+            range_max?: number | null;
+            /** Range Min */
+            range_min?: number | null;
             /** Round */
             round: string | null;
             /** Round At */
@@ -2111,6 +2223,15 @@ export interface components {
             /** Visible Unit Ids */
             visible_unit_ids: string[] | null;
         };
+        /** OverridePut */
+        OverridePut: {
+            /** Permissions */
+            permissions: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+        };
         /** OverviewCell */
         OverviewCell: {
             /** Scheduled At */
@@ -2173,6 +2294,20 @@ export interface components {
             unit_name: string;
             /** Warnings */
             warnings: string[];
+        };
+        /** OwnerBulkIn */
+        OwnerBulkIn: {
+            /** Key Result Ids */
+            key_result_ids: string[];
+            /** Owner Id */
+            owner_id: string | null;
+        };
+        /** OwnerBulkOut */
+        OwnerBulkOut: {
+            /** Changed */
+            changed: number;
+            /** Unchanged */
+            unchanged: number;
         };
         /** ReadinessItem */
         ReadinessItem: {
@@ -2321,6 +2456,8 @@ export interface components {
             can_edit_definitions: boolean;
             /** Can Edit Values */
             can_edit_values: boolean;
+            /** Can Hold */
+            can_hold: boolean;
             /** Entry Blocker */
             entry_blocker: string | null;
             /** Held At */
@@ -2532,6 +2669,22 @@ export interface components {
             parent_id?: string | null;
             /** Type Id */
             type_id?: string | null;
+        };
+        /** UnitOverrideOut */
+        UnitOverrideOut: {
+            /** Permissions */
+            permissions: {
+                [key: string]: {
+                    [key: string]: "allow" | "deny";
+                };
+            };
+            /** Unit */
+            unit: string;
+            /**
+             * Unit Id
+             * Format: uuid
+             */
+            unit_id: string;
         };
         /** UnitPatch */
         UnitPatch: {
@@ -3292,6 +3445,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RoleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_overrides_api_v1_admin_roles__role_id__overrides_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOverrideOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_override_api_v1_admin_roles__role_id__overrides__unit_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverridePut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitOverrideOut"][];
                 };
             };
             /** @description Validation Error */
@@ -4226,6 +4446,39 @@ export interface operations {
             };
         };
     };
+    hold_many_api_v1_sessions_hold_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HoldManyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HoldManyResult"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     session_page_api_v1_sessions__session_id__get: {
         parameters: {
             query?: never;
@@ -4478,6 +4731,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_owner_bulk_api_v1_units__unit_id__key_results_owner_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerBulkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerBulkOut"];
                 };
             };
             /** @description Validation Error */

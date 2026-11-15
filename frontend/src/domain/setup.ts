@@ -37,7 +37,7 @@ export function setupSteps(d: Setup): Step[] {
         ...(d.units_total && noMembers ? [`${fa(noMembers)} از ${fa(d.units_total)} واحد هنوز هیچ کاربری ندارد.`] : []),
       ],
       missingTitle: "واحدهای بدون کاربر", missing: d.units_without_members,
-      actions: [{ to: "/admin/users", label: "کاربران" }, { to: "/admin/roles", label: "نقش‌ها و مجوزها" }],
+      actions: [{ to: "/admin/users", label: "کاربران" }, { to: "/admin/access", label: "دسترسی‌ها" }],
     },
     {
       key: "cycle", title: "دوره و نقطه‌های پایش", why: "دورهٔ جاری با جلسهٔ شروع، پایش‌ها (R1، R2، …) و جلسهٔ نهایی.",
@@ -50,7 +50,7 @@ export function setupSteps(d: Setup): Step[] {
       actions: [{ to: "/admin/cycle", label: cyc ? "دوره‌ها" : draft ? "فعال‌سازی دوره" : "ساخت دوره" }],
     },
     {
-      key: "sessions", title: "زمان جلسه‌ها", why: "تا زمان جلسهٔ یک واحد تعیین نشود، ثبت مقدار برای آن واحد باز نمی‌شود.",
+      key: "sessions", title: "زمان جلسه‌ها", why: "زمان جلسه به اعضای واحد می‌گوید تا کی مقدارها را ثبت کنند. ثبت مقدار بدون آن هم باز است.",
       state: !cyc ? "wait" : unsched === 0 ? "done" : d.units_scheduled ? "partial" : "todo",
       lines: !cyc ? ["بعد از فعال‌شدن دوره."]
         : inRound === 0 ? ["همهٔ جلسه‌های این دوره برگزار شده‌اند."]

@@ -5,8 +5,10 @@ import type { RoleT } from "../../api/types";
 import { fa } from "../../domain/format";
 import { ErrorBox, Skeleton } from "../../ui/parts";
 import { Field, Msg, Select, useAction } from "./fields";
+import UnitOverrides from "./UnitOverrides";
 
-const RES: Record<string, string> = { objective: "هدف", key_result: "نتیجه کلیدی", review_value: "مقدار پایش", session: "جلسه", report: "گزارش", users: "کاربران" };
+const RES: Record<string, string> = { objective: "هدف", key_result: "نتیجهٔ کلیدی", review_value: "مقدار پایش", session: "جلسه", report: "گزارش", users: "کاربران" };
+/** «تأیید» on «جلسه» is «برگزار شد»: freezing a round. */
 const ACT: Record<string, string> = { view: "مشاهده", create: "ایجاد", edit: "ویرایش", delete: "حذف", approve: "تأیید" };
 const SCOPE: Record<string, string> = { unit: "واحد خود", unit_tree: "واحد و زیرمجموعه", all: "همه" };
 type Cell = "allow" | "deny" | undefined;
@@ -70,7 +72,8 @@ export default function RolesPanel() {
             {msg && <span className={msg.includes("✓") ? "ok" : "bad"} role="status">{msg}</span>}
           </div>
         </div>
-        <div className="note">قانون «ممنوع» همیشه بر «مجاز» غلبه می‌کند. تغییرات پس از ذخیره در گزارش ممیزی ثبت می‌شود.</div>
+        <div className="note">قانون «ممنوع» همیشه بر «مجاز» غلبه می‌کند و «تعریف‌نشده» یعنی ممنوع. «تأیید» روی «جلسه» یعنی زدن «برگزار شد»؛ در نصب پیش‌فرض با مدیر سامانه است. تغییرات پس از ذخیره در گزارش ممیزی ثبت می‌شود.</div>
+        {role && <UnitOverrides key={role.id} role={role} resources={data.resources} actions={data.actions} res={RES} act={ACT} />}
       </div>
     </div>
   );

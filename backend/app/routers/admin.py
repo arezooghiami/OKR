@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from app.core import audit
 from app.core.db import get_db
 from app.core.deps import access, client_ip
-from app.models import AuditEvent, Membership, Role, RolePermission, RoleScope, Unit, User
-from app.schemas.out import AdminUserOut, AuditOut, RoleOut, RolesOut, SimResult
+from app.models import AuditEvent, Membership, Role, RolePermission, RoleScope, RoleUnitOverride, Unit, User
+from app.schemas.out import AdminUserOut, AuditOut, RoleOut, RolesOut, SimResult, UnitOverrideOut
 from app.services.access import Access
 from app.services.acl import ACTIONS, RESOURCES, Scope
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 def _admin(acc: Access) -> None:
     if not acc.user.is_system_admin:
-        raise HTTPException(403, "فقط مدیر سیستم")
+        raise HTTPException(403, "فقط سوپر ادمین")
 
 
 def _role_out(db: Session, r: Role) -> dict:
@@ -78,6 +78,58 @@ def put_role(role_id: uuid.UUID, body: RolePut, request: Request, db: Session = 
                  after=after["permissions"] | {"scopes": after["scopes"]}, ip=client_ip(request))
     db.commit()
     return after
+
+
+def _overrides_out(db: Session, role_id: uuid.UUID) -> list[dict]:
+    by_unit: dict[uuid.UUID, dict[str, dict[str, str]]] = {}
+    for o in db.scalars(select(RoleUnitOverride).where(RoleUnitOverride.role_id == role_id)):
+        by_unit.setdefault(o.unit_id, {}).setdefault(o.resource, {})[o.action] = o.effect
+    names = dict(db.execute(select(Unit.id, Unit.name).where(Unit.id.in_(by_unit))).all()) if by_unit else {}
+    return sorted(({"unit_id": u, "unit": names.get(u, "—"), "permissions": p} for u, p in by_unit.items()),
+                  key=lambda x: x["unit"])
+
+
+@router.get("/roles/{role_id}/overrides", response_model=list[UnitOverrideOut])
+def list_overrides(role_id: uuid.UUID, db: Session = Depends(get_db), acc: Access = Depends(access)):
+    """Per-unit exceptions to this role's matrix."""
+    _admin(acc)
+    if not db.get(Role, role_id):
+        raise HTTPException(404, "نقش پیدا نشد")
+    return _overrides_out(db, role_id)
+
+
+class OverridePut(BaseModel):
+    permissions: dict[str, dict[str, str]]  # resource -> action -> allow|deny; empty = remove the exception
+
+
+@router.put("/roles/{role_id}/overrides/{unit_id}", response_model=list[UnitOverrideOut])
+def put_override(role_id: uuid.UUID, unit_id: uuid.UUID, body: OverridePut, request: Request,
+                 db: Session = Depends(get_db), acc: Access = Depends(access)):
+    """Replace this role's exceptions in one unit (only the super admin, docs/07 §7)."""
+    _admin(acc)
+    role, unit = db.get(Role, role_id), db.get(Unit, unit_id)
+    if not role or not unit:
+        raise HTTPException(404, "نقش یا واحد پیدا نشد")
+    for res, acts in body.permissions.items():
+        if res not in RESOURCES:
+            raise HTTPException(422, f"منبع نامعتبر: {res}")
+        for a, eff in acts.items():
+            if a not in ACTIONS or eff not in ("allow", "deny"):
+                raise HTTPException(422, f"مقدار نامعتبر: {res}.{a}={eff}")
+    old = db.scalars(select(RoleUnitOverride).where(RoleUnitOverride.role_id == role_id,
+                                                    RoleUnitOverride.unit_id == unit_id)).all()
+    before = {f"{o.resource}.{o.action}": o.effect for o in old}
+    db.execute(delete(RoleUnitOverride).where(RoleUnitOverride.role_id == role_id, RoleUnitOverride.unit_id == unit_id))
+    after = {}
+    for res, acts in body.permissions.items():
+        for a, eff in acts.items():
+            db.add(RoleUnitOverride(role_id=role_id, unit_id=unit_id, resource=res, action=a, effect=eff))
+            after[f"{res}.{a}"] = eff
+    role.version += 1
+    audit.record(db, actor_id=acc.user.id, action="update_unit_override", resource="role", resource_id=role_id,
+                 before={"unit": unit.name, **before}, after={"unit": unit.name, **after}, ip=client_ip(request))
+    db.commit()
+    return _overrides_out(db, role_id)
 
 
 def user_out(db: Session, u: User) -> dict:

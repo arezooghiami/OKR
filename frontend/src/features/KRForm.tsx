@@ -57,7 +57,7 @@ export default function KRForm({ ctx, kr, objectiveId, onDone }: { ctx: KRContex
   return (
     <>
       <div className="faint tiny">{isNew ? "نتیجهٔ کلیدی جدید" : `نتیجهٔ کلیدی ${kr.code.split(".").map((p) => fa(p)).join(".")}`}</div>
-      <h3>{isNew ? "تعریف KR" : kr.title}</h3>
+      <h3>{isNew ? "نتیجهٔ کلیدی جدید" : kr.title}</h3>
       {!isNew && <div style={{ marginTop: 4 }}><span className="lvl">نسخهٔ تعریف {fa(kr.definition_version)}</span> <Link className="lnk tiny" to={`/krs/${kr.id}`}>تاریخچه و جزئیات</Link></div>}
       {readOnly && <div className="note">شما اجازهٔ ویرایش تعریف را ندارید.</div>}
       {isNew && <div className="f"><label htmlFor="ob">هدف</label><select id="ob" value={objective} onChange={(e) => setObjective(e.target.value)}>{session.objectives.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}</select></div>}
@@ -70,7 +70,7 @@ export default function KRForm({ ctx, kr, objectiveId, onDone }: { ctx: KRContex
       {targetChanged && <div className="f"><label htmlFor="r">دلیل تغییر هدف (الزامی)</label><input id="r" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="چرا هدف تغییر کرد؟" /></div>}
       <div className="f"><label htmlFor="gs">هدف کسب‌وکاری</label>
         <select id="gs" value={goal} disabled={readOnly} onChange={(e) => setGoal(e.target.value)}><option value="">—</option>{(goals.data ?? []).map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}</select></div>
-      <div className="f"><label htmlFor="ow">مسئول KR</label>
+      <div className="f"><label htmlFor="ow">مسئول</label>
         <select id="ow" value={owner} disabled={readOnly} onChange={(e) => setOwner(e.target.value)}><option value="">— بدون مسئول —</option>{(members.data ?? []).map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}</select>
         {members.data && members.data.length === 0 && <span className="faint tiny">این واحد هنوز عضوی ندارد؛ در مدیریت ← کاربران، کاربر را به واحد اضافه کنید.</span>}</div>
       {err && <div className="note err-box" role="alert">{err}</div>}

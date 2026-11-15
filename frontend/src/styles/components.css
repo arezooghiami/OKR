@@ -230,3 +230,13 @@
   .empty-i .i{width:22px;height:22px}
   .mh p{max-width:72ch;margin-top:4px;color:var(--text-muted)}
 }
+
+@layer components {
+  /* unit page tabs: table · session · file; the active one carries the 3px accent bar */
+  .utabs{display:flex;gap:4px;margin:20px 0 8px;border-bottom:1px solid var(--line-strong);overflow-x:auto;scrollbar-width:none}
+  .utabs>*{position:relative;display:inline-flex;align-items:center;min-height:var(--row-min);padding:8px 16px;color:var(--text-muted);font-weight:var(--fw-medium);white-space:nowrap}
+  .utabs a:hover{color:var(--text);background:var(--hover);border-radius:var(--r-md) var(--r-md) 0 0}
+  .utabs .on{color:var(--text);font-weight:var(--fw-semibold)}
+  .utabs .on::after{content:"";position:absolute;inset-inline:12px;bottom:-1px;height:3px;border-radius:var(--r-pill);background:var(--accent)}
+  .utabs .off{color:var(--text-faint);cursor:default}
+}

@@ -88,6 +88,7 @@ class SessionPageOut(SessionHead):
     entry_blocker: str | None
     can_edit_values: bool
     can_edit_definitions: bool
+    can_hold: bool  # may mark this session «برگزار شد» (session/approve)
     score: float | None
     objectives: list[ObjectiveBlockOut]
 
@@ -234,6 +235,8 @@ class MyKR(BaseModel):
     title: str
     baseline: float | None
     target: float | None
+    range_min: float | None = None  # only for "maintain" KRs (keep within a range)
+    range_max: float | None = None
     session_id: uuid.UUID | None
     value: float | None
     entry_version: int | None
@@ -282,6 +285,12 @@ class RoleOut(BaseModel):
     users: int
     permissions: dict[str, dict[str, Literal["allow", "deny"]]]
     scopes: dict[str, str]
+
+
+class UnitOverrideOut(BaseModel):
+    unit_id: uuid.UUID
+    unit: str
+    permissions: dict[str, dict[str, Literal["allow", "deny"]]]
 
 
 class RolesOut(BaseModel):

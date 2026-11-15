@@ -1803,6 +1803,53 @@
         "title": "HoldIn",
         "type": "object"
       },
+      "HoldManyIn": {
+        "properties": {
+          "session_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Session Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "session_ids"
+        ],
+        "title": "HoldManyIn",
+        "type": "object"
+      },
+      "HoldManyResult": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "ok"
+        ],
+        "title": "HoldManyResult",
+        "type": "object"
+      },
       "IdOut": {
         "properties": {
           "id": {
@@ -2769,8 +2816,21 @@
       },
       "MeOut": {
         "properties": {
+          "can_hold": {
+            "title": "Can Hold",
+            "type": "boolean"
+          },
           "full_name": {
             "title": "Full Name",
+            "type": "string"
+          },
+          "home": {
+            "enum": [
+              "dashboard",
+              "unit",
+              "my"
+            ],
+            "title": "Home",
             "type": "string"
           },
           "id": {
@@ -2780,6 +2840,10 @@
           },
           "is_system_admin": {
             "title": "Is System Admin",
+            "type": "boolean"
+          },
+          "org_wide": {
+            "title": "Org Wide",
             "type": "boolean"
           },
           "roles": {
@@ -2799,7 +2863,10 @@
           "username",
           "full_name",
           "is_system_admin",
-          "roles"
+          "roles",
+          "home",
+          "org_wide",
+          "can_hold"
         ],
         "title": "MeOut",
         "type": "object"
@@ -3025,6 +3092,28 @@
               }
             ],
             "title": "Previous Value"
+          },
+          "range_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Range Max"
+          },
+          "range_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Range Min"
           },
           "round": {
             "anyOf": [
@@ -3690,6 +3779,25 @@
         "title": "OrgTreeOut",
         "type": "object"
       },
+      "OverridePut": {
+        "properties": {
+          "permissions": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Permissions",
+            "type": "object"
+          }
+        },
+        "required": [
+          "permissions"
+        ],
+        "title": "OverridePut",
+        "type": "object"
+      },
       "OverviewCell": {
         "properties": {
           "scheduled_at": {
@@ -3911,6 +4019,54 @@
           "total_krs"
         ],
         "title": "OverviewUnit",
+        "type": "object"
+      },
+      "OwnerBulkIn": {
+        "properties": {
+          "key_result_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Key Result Ids",
+            "type": "array"
+          },
+          "owner_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Id"
+          }
+        },
+        "required": [
+          "key_result_ids",
+          "owner_id"
+        ],
+        "title": "OwnerBulkIn",
+        "type": "object"
+      },
+      "OwnerBulkOut": {
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "integer"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "changed",
+          "unchanged"
+        ],
+        "title": "OwnerBulkOut",
         "type": "object"
       },
       "ReadinessItem": {
@@ -4345,6 +4501,10 @@
             "title": "Can Edit Values",
             "type": "boolean"
           },
+          "can_hold": {
+            "title": "Can Hold",
+            "type": "boolean"
+          },
           "entry_blocker": {
             "anyOf": [
               {
@@ -4464,6 +4624,7 @@
           "entry_blocker",
           "can_edit_values",
           "can_edit_definitions",
+          "can_hold",
           "score",
           "objectives"
         ],
@@ -4951,6 +5112,40 @@
           "name"
         ],
         "title": "UnitIn",
+        "type": "object"
+      },
+      "UnitOverrideOut": {
+        "properties": {
+          "permissions": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "enum": [
+                  "allow",
+                  "deny"
+                ],
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Permissions",
+            "type": "object"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "unit_id": {
+            "format": "uuid",
+            "title": "Unit Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit_id",
+          "unit",
+          "permissions"
+        ],
+        "title": "UnitOverrideOut",
         "type": "object"
       },
       "UnitPatch": {
@@ -6515,6 +6710,132 @@
         ]
       }
     },
+    "/api/v1/admin/roles/{role_id}/overrides": {
+      "get": {
+        "description": "Per-unit exceptions to this role's matrix.",
+        "operationId": "list_overrides_api_v1_admin_roles__role_id__overrides_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "role_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Role Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnitOverrideOut"
+                  },
+                  "title": "Response List Overrides Api V1 Admin Roles  Role Id  Overrides Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Overrides",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/roles/{role_id}/overrides/{unit_id}": {
+      "put": {
+        "description": "Replace this role's exceptions in one unit (only the super admin, docs/07 §7).",
+        "operationId": "put_override_api_v1_admin_roles__role_id__overrides__unit_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "role_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Role Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "unit_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Unit Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverridePut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnitOverrideOut"
+                  },
+                  "title": "Response Put Override Api V1 Admin Roles  Role Id  Overrides  Unit Id  Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Put Override",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/setup": {
       "get": {
         "operationId": "setup_api_v1_admin_setup_get",
@@ -7914,6 +8235,57 @@
         ]
       }
     },
+    "/api/v1/sessions/hold": {
+      "post": {
+        "description": "Mark several sessions held at once (e.g. every unit's R1 after the review week). Each session is\nchecked and committed on its own, so one refusal does not undo the others.",
+        "operationId": "hold_many_api_v1_sessions_hold_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldManyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HoldManyResult"
+                  },
+                  "title": "Response Hold Many Api V1 Sessions Hold Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Hold Many",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
     "/api/v1/sessions/{session_id}": {
       "get": {
         "operationId": "session_page_api_v1_sessions__session_id__get",
@@ -8375,6 +8747,65 @@
         "summary": "Export Unit",
         "tags": [
           "exports"
+        ]
+      }
+    },
+    "/api/v1/units/{unit_id}/key-results/owner": {
+      "post": {
+        "description": "Give many KRs of one unit the same owner in one step (e.g. right after an Excel import).\nEach change is a normal new definition version with its audit record.",
+        "operationId": "set_owner_bulk_api_v1_units__unit_id__key_results_owner_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unit_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Unit Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerBulkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerBulkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Owner Bulk",
+        "tags": [
+          "okr"
         ]
       }
     },

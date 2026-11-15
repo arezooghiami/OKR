@@ -57,7 +57,7 @@ function UserForm({ user, onDone }: { user: AdminUser | null; onDone: () => void
           <input value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr" autoComplete="new-password" style={{ flex: 1 }} />
           <button type="button" className="btn o" onClick={() => setPassword(randomPassword())}>ساخت رمز</button></div></label>
         {password && <span className="faint tiny">این رمز را همین الان یادداشت کنید؛ بعد از ذخیره قابل مشاهده نیست.</span>}</div>
-      <label style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}><input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} /> مدیر سیستم (دسترسی کامل)</label>
+      <label style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}><input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} /> سوپر ادمین (دسترسی کامل)</label>
       {user && <label style={{ display: "flex", gap: 8, marginTop: 6, alignItems: "center" }}><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /> فعال</label>}
       <Msg err={a.err} ok={a.ok} />
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
@@ -105,7 +105,7 @@ export function UsersPanel() {
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}><div className="av" style={{ width: 30, height: 30 }}>{u.full_name[0]}</div>
             <div><b>{u.full_name}</b><div className="faint tiny" dir="ltr" style={{ textAlign: "start" }}>{u.username}</div></div></div>
           <span style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{u.memberships.map((m) => <Tag key={m.id} color="--ac">{m.role}{m.unit ? ` · ${m.unit}` : ""}</Tag>)}{u.memberships.length === 0 && <span className="risk tiny">بدون نقش</span>}</span>
-          <span className="faint tiny">{u.is_system_admin ? "مدیر سیستم" : u.source === "ldap" ? "AD" : "محلی"}</span>
+          <span className="faint tiny">{u.is_system_admin ? "سوپر ادمین" : u.source === "ldap" ? "AD" : "محلی"}</span>
           <span className={`tiny ${u.active ? "ok" : "bad"}`} style={{ fontWeight: 600 }}>{u.active ? "● فعال" : "▲ غیرفعال"}</span>
         </div>))}
       {data?.length === 0 && !loading && <div className="empty"><b>کاربری پیدا نشد</b></div>}

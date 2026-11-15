@@ -24,6 +24,9 @@ class OrgTree:
             cur = self.parents.get(cur)
         return False
 
+    def all_units(self) -> set[uuid.UUID]:
+        return set(self.parents)
+
     def subtree(self, unit: uuid.UUID) -> set[uuid.UUID]:
         out, stack = set(), [unit]
         while stack:

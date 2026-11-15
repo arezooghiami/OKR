@@ -38,7 +38,7 @@ def _cycle(db: Session, cycle_id: uuid.UUID | None) -> Cycle:
     cycle = db.scalars(select(Cycle).where(Cycle.status == "active")).first() or db.scalars(
         select(Cycle).where(Cycle.status == "closed").order_by(Cycle.starts_on.desc()).limit(1)).first()
     if not cycle:
-        raise HTTPException(404, "چرخهٔ فعالی وجود ندارد")
+        raise HTTPException(404, "دورهٔ فعالی وجود ندارد")
     return cycle
 
 
@@ -123,15 +123,15 @@ def workspace(unit_id: uuid.UUID, cycle_id: uuid.UUID | None = None, db: Session
     readiness = [
         {"key": "objectives", "label": "دست‌کم یک هدف تعریف شده", "done": bool(objectives),
          "detail": None if objectives else "هنوز هدفی ثبت نشده"},
-        {"key": "objective_owner", "label": "هر هدف متصدی دارد", "done": bool(objectives) and not no_owner_obj,
-         "detail": f"{len(no_owner_obj)} هدف بدون متصدی" if no_owner_obj else None},
+        {"key": "objective_owner", "label": "هر هدف مسئول دارد", "done": bool(objectives) and not no_owner_obj,
+         "detail": f"{len(no_owner_obj)} هدف بدون مسئول هدف" if no_owner_obj else None},
         {"key": "krs", "label": "هر هدف دست‌کم یک نتیجهٔ کلیدی دارد", "done": bool(objectives) and not no_kr,
          "detail": f"{len(no_kr)} هدف بدون نتیجهٔ کلیدی" if no_kr else None},
         {"key": "kr_owner", "label": "هر نتیجهٔ کلیدی مسئول دارد", "done": bool(all_krs) and not no_owner_kr,
          "detail": f"{len(no_owner_kr)} نتیجهٔ کلیدی بدون مسئول" if no_owner_kr else None},
         {"key": "scheduled", "label": "زمان جلسهٔ شروع تعیین شده",
          "done": start is not None and start.status != "unscheduled",
-         "detail": None if start is not None and start.status != "unscheduled" else "مدیر سیستم باید زمان را بگذارد"},
+         "detail": None if start is not None and start.status != "unscheduled" else "مدیر واحد یا مدیر سامانه زمان را می‌گذارد"},
     ]
     return {
         "unit_id": unit.id, "unit_name": unit.name, "manager": unit.manager_name,

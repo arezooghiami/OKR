@@ -27,13 +27,14 @@ export default function Layout() {
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPalette(true); }
+      // e.code is the physical key, so Ctrl+K also works with the Persian keyboard layout
+      if ((e.ctrlKey || e.metaKey) && e.code === "KeyK") { e.preventDefault(); setPalette(true); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
 
-  const groups = navFor(isOrgWide(me), !!me?.is_system_admin);
+  const groups = navFor(isOrgWide(me), !!me?.is_system_admin, me?.home === "unit");
   const { pathname } = useLocation();
 
   return (
@@ -77,25 +78,29 @@ type NavItem = { to: string; label: string; short: string; icon: string; end?: b
 const I = {
   dash: "M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z",
   unit: "M4 21V6l8-3v18M12 21V9l8 3v9M3 21h18M8 9v.01M8 13v.01M8 17v.01M16 15v.01",
-  meet: "M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM8 13h3v3H8z",
   mine: "M20 12a8 8 0 1 1-8-8M16 12a4 4 0 1 1-4-4M12 12l8-8M17 4h3v3",
   tree: "M12 3v5M5 13v-2h14v2M5 13v3M19 13v3M12 8v8M3 16h4v4H3zM17 16h4v4h-4zM10 16h4v4h-4z",
   admin: "M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4",
-  upload: "M12 16V4M7 9l5-5 5 5M4 20h16",
-  file: "M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6",
 };
 
-/** Menu by role: KR owners start from their own KRs, unit managers from their unit, org-wide roles from the dashboard. */
-function navFor(orgWide: boolean, admin: boolean): { title: string; items: NavItem[] }[] {
+/** Menu by role (docs/07 phase 2). Managers: dashboard · units · strategic goals · my KRs · admin (super admin only).
+ *  Unit users: my KRs · my unit. A unit's session and its file are tabs of the unit page, not menu items. */
+function navFor(orgWide: boolean, admin: boolean, unitFirst: boolean): { title: string; items: NavItem[] }[] {
   // `short` is the one-word label of the phone bottom bar
   const mine: NavItem = { to: "/my", label: "KRهای من", short: "کار من", icon: I.mine };
-  const groups = orgWide
-    ? [{ title: "سازمان", items: [{ to: "/", label: "داشبورد سازمان", short: "داشبورد", icon: I.dash, end: true }, { to: "/unit", label: "واحدها", short: "واحدها", icon: I.unit }, { to: "/units", label: "پروندهٔ واحدها", short: "پرونده", icon: I.file },
-        { to: "/session", label: "جلسه‌های پایش", short: "جلسه", icon: I.meet }, { to: "/goals", label: "اهداف کلان", short: "اهداف", icon: I.tree, wide: true }] },
-       { title: "کار من", items: [mine] }]
-    : [{ title: "کار من", items: [mine, { to: "/unit", label: "واحد من", short: "واحد", icon: I.unit }, { to: "/session", label: "جلسهٔ پایش", short: "جلسه", icon: I.meet }] },
-       { title: "سازمان", items: [{ to: "/overview", label: "داشبورد سازمان", short: "داشبورد", icon: I.dash }, { to: "/units", label: "پروندهٔ واحد", short: "پرونده", icon: I.file }, { to: "/goals", label: "اهداف کلان", short: "اهداف", icon: I.tree, wide: true }] }];
-  if (admin) groups.push({ title: "مدیریت", items: [{ to: "/admin", label: "راه‌اندازی و تنظیمات", short: "مدیریت", icon: I.admin, wide: true, match: (p) => p.startsWith("/admin") && !p.startsWith("/admin/import") }, { to: "/admin/import", label: "ورود از اکسل", short: "اکسل", icon: I.upload, wide: true }] });
+  const unitPage = (p: string) => p.startsWith("/unit") || p.startsWith("/sessions/") || p.startsWith("/session");
+  if (!orgWide) {
+    const unit: NavItem = { to: "/unit", label: "واحد من", short: "واحد", icon: I.unit, match: unitPage };
+    return [{ title: "کار من", items: unitFirst ? [unit, mine] : [mine, unit] }];
+  }
+  const groups = [
+    { title: "سازمان", items: [
+      { to: "/", label: "داشبورد", short: "داشبورد", icon: I.dash, end: true },
+      { to: "/units", label: "واحدها", short: "واحدها", icon: I.unit, match: unitPage },
+      { to: "/goals", label: "اهداف کلان", short: "اهداف", icon: I.tree }] },
+    { title: "کار من", items: [mine] },
+  ];
+  if (admin) groups.push({ title: "سامانه", items: [{ to: "/admin", label: "مدیریت", short: "مدیریت", icon: I.admin, wide: true, match: (p) => p.startsWith("/admin") }] });
   return groups;
 }
 
@@ -115,7 +120,7 @@ function AccountMenu({ name, admin, onSignOut }: { name: string; admin: boolean;
       <button className="av" aria-label={`حساب کاربری ${name}`} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>{name[0]}</button>
       {open && (
         <div className="menu" role="menu">
-          <div className="who"><b>{name}</b>{admin && <span className="faint tiny">مدیر سیستم</span>}</div>
+          <div className="who"><b>{name}</b>{admin && <span className="faint tiny">سوپر ادمین</span>}</div>
           <button role="menuitem" className="it danger" onClick={() => { setOpen(false); onSignOut(); }}>خروج از حساب</button>
           <div className="about"><span>OKR نسخهٔ {APP_VERSION}</span><span>A.G</span></div>
         </div>
@@ -133,13 +138,11 @@ function Palette({ onClose, overview, admin }: { onClose: () => void; overview: 
 
   const items = useMemo(() => {
     const go = (to: string) => () => nav(to);
-    const base = [["واحد من", "/unit"], ["نمای کلی سازمان", "/"], ["جلسهٔ پایش", "/session"], ["KRهای من", "/my"], ["اهداف کلان", "/goals"], ["پروندهٔ واحدها", "/units"], ...(admin ? [["مدیریت سامانه", "/admin"]] : [])].map(([t, to]) => ({ group: "برو به", t, run: go(to) }));
-    const units = (overview?.units ?? []).map((u) => {
-      const sid = u.current_session_id;
-      return { group: "واحدها", t: `جلسهٔ ${u.unit_name}`, run: go(`/sessions/${sid}`) };
-    });
-    const files = (overview?.units ?? []).map((u) => ({ group: "پروندهٔ واحد", t: `پروندهٔ ${u.unit_name}`, run: go(`/units/${u.unit_id}`) }));
-    return [...base, ...files, ...units].filter((x) => x.t.includes(q));
+    const base = [["داشبورد", "/"], ["واحدها", "/units"], ["KRهای من", "/my"], ["اهداف کلان", "/goals"], ...(admin ? [["مدیریت", "/admin"], ["ورود از اکسل", "/admin/import"]] : [])].map(([t, to]) => ({ group: "برو به", t, run: go(to) }));
+    const units = (overview?.units ?? []).map((u) => ({ group: "واحدها", t: u.unit_name, run: go(`/unit/${u.unit_id}`) }));
+    const meetings = (overview?.units ?? []).filter((u) => u.current_session_id)
+      .map((u) => ({ group: "جلسهٔ پایش", t: `جلسهٔ ${u.unit_name}`, run: go(`/sessions/${u.current_session_id}`) }));
+    return [...base, ...units, ...meetings].filter((x) => x.t.includes(q));
   }, [q, nav, overview, admin]);
 
   const run = (k: number) => { const it = items[k]; onClose(); it?.run(); };

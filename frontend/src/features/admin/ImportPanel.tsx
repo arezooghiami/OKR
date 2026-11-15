@@ -59,7 +59,7 @@ export default function ImportPanel() {
   const commit = () => {
     if (!file || !report) return;
     const t = report.totals;
-    if (!window.confirm(`${fa(t.objectives)} هدف و ${fa(t.krs)} نتیجهٔ کلیدی در چرخهٔ «${report.cycle?.name}» ثبت شود؟`)) return;
+    if (!window.confirm(`${fa(t.objectives)} هدف و ${fa(t.krs)} نتیجهٔ کلیدی در دورهٔ «${report.cycle?.name}» ثبت شود؟`)) return;
     a.run(async () => {
       const r = await send("commit", file, mapping);
       setDone(r); setReport(null);
@@ -71,10 +71,10 @@ export default function ImportPanel() {
     return (
       <div className="card">
         <h3 className="ok">ورود اطلاعات انجام شد ✓</h3>
-        <div>{fa(t.objectives)} هدف، {fa(t.krs)} نتیجهٔ کلیدی، {fa(t.values)} مقدار پایش و {fa(t.notes)} یادداشت در چرخهٔ «{done.cycle?.name}» ثبت شد.
+        <div>{fa(t.objectives)} هدف، {fa(t.krs)} نتیجهٔ کلیدی، {fa(t.values)} مقدار پایش و {fa(t.notes)} یادداشت در دورهٔ «{done.cycle?.name}» ثبت شد.
           {t.units_created > 0 && <> {fa(t.units_created)} واحد جدید ساخته شد.</>}</div>
-        <div className="note">همهٔ موارد با برچسب «ایمپورت از فایل اکسل پایش» در تاریخچهٔ هر KR و در گزارش ممیزی ثبت شده‌اند.
-          قدم بعد: برای واحدهای جدید در «واحدها» جایگاه و مدیر را مشخص کنید، سپس در «کاربران» مسئول KRها را تعریف کنید.</div>
+        <div className="note">همهٔ موارد با برچسب «ایمپورت از فایل اکسل پایش» در تاریخچهٔ هر نتیجهٔ کلیدی و در گزارش ممیزی ثبت شده‌اند.
+          قدم بعد: برای واحدهای جدید در «واحدها» جایگاه و مدیر را مشخص کنید، سپس در «کاربران» مسئول نتیجه‌های کلیدی را تعیین کنید (در جدول واحد، چند مورد با هم).</div>
         <div style={{ display: "flex", gap: 8 }}>
           <Link className="btn" to="/">دیدن نمای کلی</Link>
           <Link className="btn o" to="/admin/units">تنظیم واحدها</Link>
@@ -101,7 +101,7 @@ export default function ImportPanel() {
       {report && report.blocking.length > 0 && (
         <div className="note err-box" role="alert">
           {report.blocking.map((b) => <div key={b}>{b}</div>)}
-          <Link className="lnk" to="/admin/cycle">رفتن به چرخه و جلسه‌ها</Link>
+          <Link className="lnk" to="/admin/cycle">رفتن به دوره و جلسه‌ها</Link>
         </div>
       )}
 
@@ -110,13 +110,13 @@ export default function ImportPanel() {
           <div className="card">
             <h3>خلاصهٔ پیش‌نمایش</h3>
             <div style={{ lineHeight: 2 }}>
-              با ثبت نهایی، در چرخهٔ <b>«{report.cycle?.name}»</b>: <b>{fa(report.totals.objectives)}</b> هدف، <b>{fa(report.totals.krs)}</b> نتیجهٔ کلیدی،
+              با ثبت نهایی، در دورهٔ <b>«{report.cycle?.name}»</b>: <b>{fa(report.totals.objectives)}</b> هدف، <b>{fa(report.totals.krs)}</b> نتیجهٔ کلیدی،
               {" "}<b>{fa(report.totals.values)}</b> مقدار پایش و <b>{fa(report.totals.notes)}</b> یادداشت وارد می‌شود.
               {report.totals.units_created > 0 && <> {fa(report.totals.units_created)} واحد جدید ساخته می‌شود.</>}
               {report.totals.goals_created > 0 && <> {fa(report.totals.goals_created)} هدف کسب‌وکاری به فهرست اضافه می‌شود.</>}
             </div>
             <div className="faint tiny" style={{ marginTop: 6 }}>
-              پایش‌های اکسل به ترتیب به پایش‌های این چرخه نگاشته می‌شوند: {report.review_points.length ? report.review_points.join("، ") : "چرخه پایشی ندارد"}.
+              پایش‌های اکسل به ترتیب به پایش‌های این دوره نگاشته می‌شوند: {report.review_points.length ? report.review_points.join("، ") : "دوره پایشی ندارد"}.
               {(report.totals.warnings > 0 || report.totals.errors > 0) && <> · <span className="risk">{fa(report.totals.warnings)} هشدار</span>{report.totals.errors > 0 && <>، <span className="bad">{fa(report.totals.errors)} خطا</span></>} — جزئیات کنار هر شیت.</>}
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function ImportPanel() {
                     <optgroup label="واحدهای موجود">{report.units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</optgroup>
                     <option value="skip">وارد نشود</option>
                   </select>
-                  <span className="mut tiny">{fa(s.objectives)} هدف، {fa(s.krs)} KR{s.values > 0 && <>، {fa(s.values)} مقدار</>}{s.notes > 0 && <>، {fa(s.notes)} یادداشت</>}</span>
+                  <span className="mut tiny">{fa(s.objectives)} هدف، {fa(s.krs)} نتیجهٔ کلیدی{s.values > 0 && <>، {fa(s.values)} مقدار</>}{s.notes > 0 && <>، {fa(s.notes)} یادداشت</>}</span>
                   <span style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "end" }}>
                     <span className={`tiny ${cls}`} style={{ fontWeight: 600 }}>{label}</span>
                     {s.issues.length > 0 && <button className="lnk tiny" aria-expanded={open === s.sheet} onClick={() => setOpen(open === s.sheet ? null : s.sheet)}>
@@ -162,7 +162,7 @@ export default function ImportPanel() {
                 {report.goals.map((g) => <span key={g.title} className="tag" style={{ ["--c" as string]: "var(--g0)" }}>{g.title}، {fa(g.krs)}{g.action === "create" && " · جدید"}</span>)}
               </div>
               {report.unmatched_goals.length > 0 && (
-                <div className="note">این مقادیر در ستون «هدف کسب‌وکاری» بودند ولی در فهرست اهداف نیستند (احتمالاً ستون جابه‌جا پر شده). در توضیحات KR نگه داشته می‌شوند:
+                <div className="note">این مقادیر در ستون «هدف کسب‌وکاری» بودند ولی در فهرست اهداف نیستند (احتمالاً ستون جابه‌جا پر شده). در توضیحات نتیجهٔ کلیدی نگه داشته می‌شوند:
                   {" "}{report.unmatched_goals.map((u) => `${u.text} (${fa(u.krs)})`).join("، ")}</div>
               )}
             </div>

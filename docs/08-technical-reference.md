@@ -71,7 +71,7 @@ OKR_project/
 │  ├─ app/
 │  │  ├─ main.py            ساخت برنامه، CORS، ثبت ۱۲ router زیر /api/v1، مسیر /health
 │  │  ├─ bootstrap.py       راه‌اندازی دیتابیس خالی: نقش‌ها، انواع واحد، یک ادمین (‎--reset برای پاک‌سازی کامل)
-│  │  ├─ defaults.py        ماتریس دسترسی چهار نقش استاندارد و انواع واحد
+│  │  ├─ defaults.py        ماتریس دسترسی پنج نقش استاندارد و انواع واحد
 │  │  ├─ export_openapi.py  تولید frontend/openapi.json
 │  │  ├─ core/              config · db · security · audit · deps
 │  │  ├─ models/            access · audit · cycle · okr · org · support · user
@@ -150,16 +150,21 @@ OKR_project/
   - allowهای چند نقش با هم جمع می‌شوند.
 - یک پیاده‌سازی، دو کاربرد: اجرای واقعی و **شبیه‌ساز دسترسی** (`POST /admin/access/simulate`) که نتیجه، قانون مؤثر و دلیل را برمی‌گرداند.
 
-**چهار نقش پیش‌فرض** (`defaults.py`):
+**پنج نقش پیش‌فرض** (`defaults.py`، فاز ۲؛ migration `a1f3c5e7b902` نصب‌های قبلی را تبدیل می‌کند):
 
 | نقش | خلاصهٔ اختیار | دامنه |
 |---|---|---|
-| ادمین سیستم | همه‌چیز، به‌جز حذف مقدار پایش و تأیید کاربران | همه |
-| مدیر واحد | تعریف و ویرایش هدف و KR، ثبت مقدار، مدیریت جلسه | واحد و زیرمجموعه |
-| مسئول KR | مشاهده و ثبت مقدار برای KRهای خود | واحد خود |
-| ناظر | فقط مشاهده و گزارش | همه |
+| سوپر ادمین | همه‌چیز. همهٔ تعریف‌ها و ورود داده، دسترسی‌ها، برند و لایسنس. علامت `is_system_admin` | همه |
+| مدیر سامانه | دیدن همه‌چیز، ثبت مقدار، زمان‌بندی جلسه و **«برگزار شد»** (`session/approve`). تعریف کاربر و واحد ندارد | همه |
+| کارشناس سامانه | دیدن همه‌چیز و گزارش، بدون حذف | همه |
+| مدیر واحد | تعریف و ویرایش هدف و نتیجهٔ کلیدی، تعیین مسئول، ثبت مقدار، زمان‌بندی جلسه | واحد و زیرمجموعه |
+| کارشناس واحد | ثبت مقدار نتیجه‌های کلیدی | واحد خود |
 
-**ایراد شناخته‌شده:** فهرست واحدهای قابل‌مشاهده (`visible_units`) قانون deny را در نظر نمی‌گیرد (فاز ۳).
+**استثنای واحد** (جدول `role_unit_override`): برای یک واحد مشخص، خانه‌ای از ماتریس یک نقش جایگزین می‌شود. دامنهٔ نقش هرگز بزرگ‌تر نمی‌شود. فقط سوپر ادمین آن را تعیین می‌کند (`GET /admin/roles/{id}/overrides` و `PUT /admin/roles/{id}/overrides/{unit_id}`) و هر تغییر در ممیزی ثبت می‌شود. دلیل تصمیم شبیه‌ساز هم «استثنای واحد» را نام می‌برد.
+
+`visible_units` حالا برای هر واحد همان جواب `can()` را می‌دهد، پس deny و استثنا در فهرست‌ها هم رعایت می‌شود (فاز ۲).
+
+**صفحهٔ اول** را سرور در `GET /me` تعیین می‌کند (`home`): کسی که همهٔ واحدها را می‌بیند ← داشبورد، کسی که در واحدی هدف تعریف می‌کند ← واحد من، بقیه ← KRهای من. `org_wide` و `can_hold` هم از همین‌جا می‌آیند، پس نقش سفارشی هم درست رفتار می‌کند.
 
 ---
 
@@ -187,22 +192,25 @@ OKR_project/
 | مسیر | صفحه | کاربر اصلی |
 |---|---|---|
 | `/login` | ورود | همه |
-| `/` | نقش سازمانی ← داشبورد، بقیه ← `/unit` | — |
+| `/` | بر اساس `me.home`: داشبورد، `/unit` یا `/my` | — |
 | `/overview` | داشبورد سازمان | مدیران ارشد |
-| `/unit/:unitId?` | جدول واحد (اهداف و KRها) | مدیر واحد |
-| `/session`، `/sessions/:id` | جلسهٔ پایش جاری یا مشخص | مدیر واحد |
-| `/my` | KRهای من: ذخیرهٔ خودکار، مقدار قبلی، دلیل قفل | مسئول KR |
+| `/unit/:unitId?` | صفحهٔ واحد، تب «اهداف و نتایج کلیدی» (جدول، با تعیین مسئول گروهی) | مدیر واحد |
+| `/sessions/:id` | صفحهٔ واحد، تب «جلسهٔ پایش» | مدیر واحد، مدیر سامانه |
+| `/my` | KRهای من: تیتر وظیفه‌محور، ذخیره، مقدار قبلی، دلیل قفل | کارشناس واحد |
 | `/krs/:id` | جزئیات KR: نسخه‌ها، مقایسه، کامنت | همه |
 | `/goals` | اهداف کلان (KRها بر اساس هدف راهبردی) | مدیران |
-| `/units`، `/units/:unitId` | پروندهٔ واحد (تاریخچه) | مدیران |
-| `/admin/:tab?` | راه‌اندازی، واحدها، کاربران، دوره، اهداف کلان، نقش‌ها، ورود از اکسل | ادمین |
+| `/units` | فهرست واحدها (ورودی منوی «واحدها») | مدیران |
+| `/units/:unitId` | صفحهٔ واحد، تب «پرونده و تاریخچه» | مدیران |
+| `/admin/:tab?` | راه‌اندازی، واحدها، دوره و جلسه‌ها، کاربران، دسترسی‌ها (ماتریس، استثنای واحد، شبیه‌ساز)، اهداف کلان، ورود از اکسل | سوپر ادمین |
+
+**منو** (فاز ۲): مدیران ← داشبورد · واحدها · اهداف کلان · KRهای من · مدیریت (فقط سوپر ادمین). کاربر واحد ← KRهای من · واحد من. جلسه و پرونده تب‌های صفحهٔ واحدند (`ui/UnitTabs.tsx`).
 
 **الگوها:**
 - صفحه‌ها lazy load می‌شوند.
 - `useGet("/api/v1/…")` مسیر و نوع پاسخ را از `schema.d.ts` می‌گیرد، پس مسیر اشتباه کامپایل نمی‌شود.
 - دیگر قابلیت‌ها: پالت فرمان با Ctrl+K، حالت تیره که در `localStorage` ذخیره می‌شود، و انتخابگر تاریخ جلالی.
 
-**ایراد شناخته‌شده:** مسئول KR به `/unit` فرستاده می‌شود، نه `/my` (`App.tsx:28`). این مورد در فاز ۲ درست می‌شود.
+**واژه‌نامه** (فاز ۲): «نتیجهٔ کلیدی» (KR فقط در «KRهای من»)، «دوره» نه چرخه، «پایش ۱» نه R1 (`tpLabel` در `domain/format.ts`؛ برچسب ذخیره‌شده برای اکسل همان R1 می‌ماند)، «مسئول هدف» نه متصدی.
 
 ---
 
@@ -213,10 +221,10 @@ OKR_project/
 | ورود | `POST /auth/login` · `POST /auth/refresh` · `POST /auth/logout` · `GET /me` |
 | داشبورد | `GET /dashboard/overview` · `GET /org/tree` · `GET /goals` · `GET /goals/overview` |
 | فضای کار | `GET /me/units` · `GET /units/{id}/workspace` · `GET /units/{id}/dossier` · `GET /units/{id}/members` |
-| OKR | `POST /units/{id}/objectives` · `PATCH /objectives/{id}` · `POST /objectives/{id}/archive` · `POST /objectives/{id}/key-results` · `GET/PATCH /key-results/{id}` · `POST /key-results/{id}/archive` · `POST /key-results/{id}/comments` · `GET /me/key-results` |
-| دوره و جلسه | `GET /cycles` · `GET /cycles/current` · `GET /time-points/{id}/sessions` · `GET /units/{id}/sessions` · `GET /sessions/{id}` · `GET /sessions/{id}/siblings` · `PUT /sessions/{id}` · `POST /sessions/{id}/hold` · `PUT /sessions/{id}/entries/{kr_id}` |
+| OKR | `POST /units/{id}/objectives` · `PATCH /objectives/{id}` · `POST /objectives/{id}/archive` · `POST /objectives/{id}/key-results` · `GET/PATCH /key-results/{id}` · `POST /key-results/{id}/archive` · `POST /key-results/{id}/comments` · `GET /me/key-results` · `POST /units/{id}/key-results/owner` (مسئول گروهی) |
+| دوره و جلسه | `GET /cycles` · `GET /cycles/current` · `GET /time-points/{id}/sessions` · `GET /units/{id}/sessions` · `GET /sessions/{id}` · `GET /sessions/{id}/siblings` · `PUT /sessions/{id}` · `POST /sessions/{id}/hold` · `POST /sessions/hold` (گروهی) · `PUT /sessions/{id}/entries/{kr_id}` |
 | ورود و خروج اکسل | `POST /excel/preview` · `POST /excel/commit` · `GET /org/template.xlsx` · `POST /org/preview` · `POST /org/commit` · `GET /units/{id}/export.xlsx` · `GET /export/org.xlsx` |
-| مدیریت | `GET /setup` · `GET/POST/PATCH` روی unit-types، units، goals، cycles، time-points، users، memberships، roles · `GET /admin/roles` · `PUT /admin/roles/{id}` · `GET /admin/users` · `POST /admin/access/simulate` · `GET /admin/audit` |
+| مدیریت | `GET /setup` · `GET/POST/PATCH` روی unit-types، units، goals، cycles، time-points، users، memberships، roles · `GET /admin/roles` · `PUT /admin/roles/{id}` · `GET /admin/roles/{id}/overrides` · `PUT /admin/roles/{id}/overrides/{unit_id}` · `GET /admin/users` · `POST /admin/access/simulate` · `GET /admin/audit` |
 | سلامت | `GET /health` (بیرون از `/api/v1`) |
 
 **گردش قرارداد:**

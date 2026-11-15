@@ -113,16 +113,19 @@ def seed(db: Session) -> None:
     admin = user("مهدی ایزدی", admin=True)
     user("احمد نوری")
     sina = user("سینا رضایی")
+    user("لیلا احمدی")
     db.flush()
-    db.add(Membership(user_id=admin.id, unit_id=None, role_id=roles["ادمین سیستم"].id))
-    db.add(Membership(user_id=users["احمد نوری"].id, unit_id=None, role_id=roles["ناظر"].id))
+    db.add(Membership(user_id=admin.id, unit_id=None, role_id=roles["سوپر ادمین"].id))
+    db.add(Membership(user_id=users["احمد نوری"].id, unit_id=None, role_id=roles["کارشناس سامانه"].id))
+    # the organisation's OKR owner: sees every unit and marks sessions held
+    db.add(Membership(user_id=users["لیلا احمدی"].id, unit_id=None, role_id=roles["مدیر سامانه"].id))
     for u in units.values():
         if u.manager_name:
             m = user(u.manager_name)
             db.flush()
             if u.name != "مدیرعامل":
                 db.add(Membership(user_id=m.id, unit_id=u.id, role_id=roles["مدیر واحد"].id))
-    db.add(Membership(user_id=sina.id, unit_id=units["فناوری اطلاعات"].id, role_id=roles["مسئول KR"].id))
+    db.add(Membership(user_id=sina.id, unit_id=units["فناوری اطلاعات"].id, role_id=roles["کارشناس واحد"].id))
 
     cycle = Cycle(name="چرخهٔ پاییز ۱۴۰۵", starts_on=date(2026, 9, 23), ends_on=date(2027, 1, 20), status="active", org_version_id=ver.id)
     db.add(cycle)

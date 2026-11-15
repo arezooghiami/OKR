@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
 import { useGet } from "../api/typed";
+import { useEntrySave } from "../api/useEntrySave";
 import type { KRRow, SessionHead, SessionPage as SessionT } from "../api/types";
 import { percent, statusFor, STATUS_CLASS, STATUS_LABEL } from "../domain/calc";
-import { fa, jDateTime, parseNumber, pct } from "../domain/format";
+import { fa, jDateTime, parseNumber, pct, tpLabel } from "../domain/format";
 import { Crumb, ErrorBox, Pie, Skeleton, Tag } from "../ui/parts";
 import { usePeek } from "../ui/Peek";
 import ExportButton from "../ui/ExportButton";
+import UnitTabs from "../ui/UnitTabs";
 import KRForm from "./KRForm";
 import ObjectiveForm from "./ObjectiveForm";
 
@@ -16,7 +17,6 @@ type Saving = "idle" | "saving" | "saved" | "error";
 
 export default function SessionPage() {
   const { id } = useParams();
-  const { me } = useAuth();
   const { data, error, loading, reload } = useGet("/api/v1/sessions/{session_id}", id ? { session_id: id } : null);
   const sessions = useGet("/api/v1/sessions/{session_id}/siblings", id ? { session_id: id } : null);
   const [view, setView] = useState<"cur" | "all">("cur");
@@ -36,15 +36,16 @@ export default function SessionPage() {
     peek.open(<KRForm key={kr?.id ?? "new"} ctx={ctx} kr={kr} onDone={() => { peek.close(); reload(); }} />);
   }, [data, peek, reload]);
 
-  // J/K move, Enter edits the value, Space opens the definition (desktop shortcuts; every action also has a click path)
+  // J/K move, Enter edits the value, Space opens the definition (desktop shortcuts; every action also has a click path).
+  // e.code is the physical key, so J/K work with the Persian keyboard layout too (e.key would be «ت»/«ن»).
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = (e.target as HTMLElement).tagName;
-      if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || e.ctrlKey || e.metaKey) return;
-      if (e.key === "j" || e.key === "ArrowDown") { setSelected((s) => Math.min(flat.length - 1, s + 1)); e.preventDefault(); }
-      else if (e.key === "k" || e.key === "ArrowUp") { setSelected((s) => Math.max(0, s - 1)); e.preventDefault(); }
+      if (["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(t) || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.code === "KeyJ" || e.key === "ArrowDown") { setSelected((s) => Math.min(flat.length - 1, s + 1)); e.preventDefault(); }
+      else if (e.code === "KeyK" || e.key === "ArrowUp") { setSelected((s) => Math.max(0, s - 1)); e.preventDefault(); }
       else if (e.key === "Enter" && selected >= 0) { rowsRef.current?.querySelectorAll<HTMLInputElement>("input.inp")[selected]?.focus(); e.preventDefault(); }
-      else if (e.key === " " && selected >= 0) { openForm(flat[selected]); e.preventDefault(); }
+      else if (e.code === "Space" && selected >= 0) { openForm(flat[selected]); e.preventDefault(); }
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -63,36 +64,37 @@ export default function SessionPage() {
 
   return (
     <>
-      <Crumb items={[data.unit_name, `جلسهٔ ${data.time_point}`]} />
+      <Crumb items={["واحدها", data.unit_name, `جلسهٔ ${tpLabel(data.time_point)}`]} />
       <div className="mh">
         <div>
-          <h1>{data.time_point} · {data.unit_name}</h1>
+          <h1>{data.unit_name}</h1>
           <div className="mut" style={{ marginTop: 2 }}>
-            {data.status === "unscheduled" ? <span className="risk">زمان جلسه تعیین نشده</span> : <>{jDateTime(data.held_at ?? data.scheduled_at)}{data.place && `، ${data.place}`}{data.status === "held" && " · برگزار شد"}</>}
+            {data.status === "unscheduled" ? <>زمان جلسه هنوز تعیین نشده؛ ثبت مقدار باز است.</> : <>{jDateTime(data.held_at ?? data.scheduled_at)}{data.place && `، ${data.place}`}{data.status === "held" && "، برگزار شد"}</>}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <ExportButton path={`/units/${data.unit_id}/export.xlsx`} />
-          {data.status === "scheduled" && me?.is_system_admin && (confirmHold
+          <ExportButton path={`/units/${data.unit_id}/export.xlsx`} label="خروجی Excel" />
+          {data.can_hold && (confirmHold
             ? <><button className="btn" onClick={hold}>تأیید: جلسه برگزار شد</button><button className="btn o" onClick={() => setConfirmHold(false)}>انصراف</button></>
             : <button className="btn o" onClick={() => setConfirmHold(true)}>برگزار شد ✓</button>)}
           {data.can_edit_definitions && <button className="btn o" onClick={() => peek.open(<ObjectiveForm key="obj" unitId={data.unit_id} unitName={data.unit_name} sessionId={data.id} onDone={() => { peek.close(); reload(); }} />)}>+ هدف جدید</button>}
-          {data.can_edit_definitions && data.objectives.length > 0 && <button className="btn" onClick={() => openForm(null)}>+ KR جدید</button>}
+          {data.can_edit_definitions && data.objectives.length > 0 && <button className="btn" onClick={() => openForm(null)}>+ نتیجهٔ کلیدی</button>}
         </div>
       </div>
+      <UnitTabs unitId={data.unit_id} active="session" sessionLabel={tpLabel(data.time_point)} />
       {holdErr && <div className="warnbar" role="alert">{holdErr}</div>}
 
-      <div className="steps" aria-label="مراحل چرخه">
+      <div className="steps" aria-label="جلسه‌های دوره">
         {(sessions.data ?? []).map((s) => (
           <span key={s.id} className={s.id === data.id ? "cur" : s.status === "held" ? "dn" : ""}>
-            {s.id === data.id ? <>{s.time_point} · {s.status === "held" ? "برگزار شد" : "جاری"}</> : <Link to={`/sessions/${s.id}`}>{s.time_point}{s.status === "held" ? " ✓" : ""}</Link>}
+            {s.id === data.id ? <>{tpLabel(s.time_point)}، {s.status === "held" ? "برگزار شد" : "جاری"}</> : <Link to={`/sessions/${s.id}`}>{tpLabel(s.time_point)}{s.status === "held" ? " ✓" : ""}</Link>}
           </span>
         ))}
       </div>
 
       <div className="toolbar">
         <div className="seg"><button className={view === "cur" ? "on" : ""} onClick={() => setView("cur")}>پایش جاری</button><button className={view === "all" ? "on" : ""} onClick={() => setView("all")}>همهٔ پایش‌ها</button></div>
-        <span className="faint tiny">{fa(flat.length)} نتیجه کلیدی در {fa(data.objectives.length)} هدف{data.score != null && ` · امتیاز جلسه ${pct(data.score)}${data.status === "held" ? "" : " (تا این لحظه؛ پس از «برگزار شد» ثابت می‌شود)"}`}</span>
+        <span className="faint tiny">{fa(flat.length)} نتیجهٔ کلیدی در {fa(data.objectives.length)} هدف{data.score != null && ` · امتیاز جلسه ${pct(data.score)}${data.status === "held" ? "" : " (تا این لحظه؛ پس از «برگزار شد» ثابت می‌شود)"}`}</span>
       </div>
       {readOnlyWhy && view === "cur" && <div className="note" role="status">{readOnlyWhy}</div>}
 
@@ -102,10 +104,10 @@ export default function SessionPage() {
           {data.objectives.map((o) => (
             <section className="ob" key={o.id}>
               <div className="og"><span className="no">هدف {fa(o.number)}</span><b>{o.title}</b>
-                <span className={`tiny ${o.owner_name ? "mut" : "risk"}`}>{o.owner_name ? `متصدی: ${o.owner_name}` : "بدون متصدی"}</span>
+                <span className={`tiny ${o.owner_name ? "mut" : "risk"}`}>{o.owner_name ? `مسئول هدف: ${o.owner_name}` : "بدون مسئول هدف"}</span>
                 {data.can_edit_definitions && <button className="lnk tiny" onClick={() => peek.open(<ObjectiveForm key={o.id} unitId={data.unit_id} unitName={data.unit_name} sessionId={data.id} objective={o} onDone={() => { peek.close(); reload(); }} />)}>ویرایش</button>}
                 <span className="sc"><Pie p={o.score} size={17} /><span className={`num ${STATUS_CLASS[statusFor(o.score)]}`}>{pct(o.score)}</span></span></div>
-              <div className="kh"><span>#</span><span>نتیجه کلیدی</span><span>مبنا ← هدف</span><span>میزان پیشرفت</span><span>درصد</span><span>توضیحات {data.time_point}</span></div>
+              <div className="kh"><span>#</span><span>نتیجهٔ کلیدی</span><span>مبنا ← هدف</span><span>میزان پیشرفت</span><span>درصد</span><span>توضیحات {tpLabel(data.time_point)}</span></div>
               {o.key_results.map((k) => {
                 const idx = flat.indexOf(k);
                 return <Row key={k.id} k={k} sessionId={data.id} editable={data.can_edit_values && !k.frozen} selected={idx === selected}
@@ -129,30 +131,17 @@ function Row({ k, sessionId, editable, selected, onSelect, onOpen, onSaving }: {
   k: KRRow; sessionId: string; editable: boolean; selected: boolean; onSelect: () => void; onOpen: () => void;
   onSaving: (s: Saving, msg?: string) => void;
 }) {
-  const [val, setVal] = useState(k.value == null ? "" : fa(k.value, 4));
-  const [note, setNote] = useState(k.note ?? "");
+  const initial = { val: k.value == null ? "" : fa(k.value, 4), note: k.note ?? "" };
+  const [val, setVal] = useState(initial.val);
+  const [note, setNote] = useState(initial.note);
   const [bad, setBad] = useState(false);
-  const version = useRef(k.entry_version);
-  const timer = useRef<number>();
-  const latest = useRef({ val, note });
-  latest.current = { val, note };
+  const saver = useEntrySave({ sessionId, krId: k.id, entryVersion: k.entry_version, initial, onState: onSaving });
 
-  const def = { kind: k.kind, baseline: k.baseline, target: k.target };
   const parsed = parseNumber(val);
-  const livePercent = k.frozen ? k.percent : parsed === undefined ? k.percent : percent(def, parsed);
-  const status = k.frozen ? k.status : statusFor(livePercent);
-
-  const save = () => {
-    const v = parseNumber(latest.current.val);
-    if (v === undefined) return;
-    onSaving("saving");
-    api<{ entry_version: number }>(`/sessions/${sessionId}/entries/${k.id}`, {
-      method: "PUT", body: { value: v, note: latest.current.note || null, expected_version: version.current },
-    }).then((r) => { version.current = r.entry_version; onSaving("saved"); })
-      .catch((e: Error) => onSaving("error", e.message));
-  };
-  const schedule = () => { window.clearTimeout(timer.current); timer.current = window.setTimeout(save, 600); };
-  useEffect(() => () => window.clearTimeout(timer.current), []);
+  // this row has no range bounds, so a "keep within range" KR shows the server's percent until saved
+  const live = !k.frozen && parsed !== undefined && k.kind !== "maintain";
+  const livePercent = live ? percent({ kind: k.kind, baseline: k.baseline, target: k.target }, parsed) : k.percent;
+  const status = live ? statusFor(livePercent) : k.status;
 
   return (
     <div className={`kr2 ${selected ? "sel" : ""}`} tabIndex={0} onClick={(e) => { onSelect(); if ((e.target as HTMLElement).tagName !== "INPUT") onOpen(); }}>
@@ -162,10 +151,12 @@ function Row({ k, sessionId, editable, selected, onSelect, onOpen, onSaving }: {
       <span className="bt num mut" style={{ whiteSpace: "nowrap" }}>{fa(k.baseline)} ← <b style={{ color: "var(--text)" }}>{fa(k.target)}</b></span>
       <input className={`inp num ${editable ? "" : "ro"} ${bad ? "err" : ""}`} aria-label={`میزان پیشرفت ${k.title}`} inputMode="decimal" placeholder="—" value={val} readOnly={!editable}
         onFocus={(e) => { e.target.select(); onSelect(); }}
-        onChange={(e) => { setVal(e.target.value); setBad(parseNumber(e.target.value) === undefined); schedule(); }} />
+        onChange={(e) => { setVal(e.target.value); setBad(parseNumber(e.target.value) === undefined); saver.track(e.target.value, note); }}
+        onBlur={saver.flush} onKeyDown={(e) => { if (e.key === "Enter") saver.flush(); }} />
       <span className="pcell"><Pie p={livePercent} status={status} /><span className={`num ${STATUS_CLASS[status]}`} title={STATUS_LABEL[status]}>{pct(livePercent)}</span></span>
       <span className="ntw"><input className={`nt ${editable ? "" : "ro"}`} aria-label="توضیحات" placeholder="توضیح…" value={note} readOnly={!editable}
-        onChange={(e) => { setNote(e.target.value); schedule(); }} /></span>
+        onChange={(e) => { setNote(e.target.value); saver.track(val, e.target.value); }} onBlur={saver.flush}
+        onKeyDown={(e) => { if (e.key === "Enter") saver.flush(); }} /></span>
     </div>
   );
 }
@@ -183,7 +174,7 @@ function AllRounds({ sessions }: { sessions: SessionHead[] }) {
   return (
     <div className="tw">
       <table className="dt">
-        <thead><tr><th>نتیجه کلیدی</th><th className="c">مبنا</th><th className="c">هدف</th>{pages.map((p) => <th key={p.id} className="c">{p.time_point}</th>)}</tr></thead>
+        <thead><tr><th>نتیجهٔ کلیدی</th><th className="c">مبنا</th><th className="c">هدف</th>{pages.map((p) => <th key={p.id} className="c">{tpLabel(p.time_point)}</th>)}</tr></thead>
         <tbody>{rows.map(({ k }) => (
           <tr key={k.id}><td className="l"><span className="num faint">{k.code.split(".").map((x) => fa(x)).join(".")}</span> {k.title}</td><td className="num mut c">{fa(k.baseline)}</td><td className="num c"><b>{fa(k.target)}</b></td>
             {pages.map((p) => { const c = cell(p, k.id); return c?.value == null ? <td key={p.id} className="c empty-c" /> : <td key={p.id} className="c"><div className="num" style={{ fontWeight: 600 }}>{fa(c.value)}</div><div className={`pp num ${STATUS_CLASS[c.status]}`}>{pct(c.percent)}</div></td>; })}

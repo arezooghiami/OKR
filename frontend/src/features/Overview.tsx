@@ -3,19 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { useGet } from "../api/typed";
 import type { Overview as OverviewT, OverviewUnit } from "../api/types";
 import { STATUS_CLASS, STATUS_LABEL, statusFor } from "../domain/calc";
-import { fa, jDayMonth, jTime, pct } from "../domain/format";
+import { fa, jDayMonth, jTime, pct, tpLabel } from "../domain/format";
 import ExportButton from "../ui/ExportButton";
 import { Bar, Crumb, Empty, ErrorBox, NoCycle, Pie, Skeleton } from "../ui/parts";
 import { usePeek } from "../ui/Peek";
+import { useAuth } from "../auth/AuthContext";
+import HoldPanel from "./HoldPanel";
 
 const sessionOf = (u: OverviewUnit) => u.current_session_id;
 /** Label of the held round the unit's score comes from. */
-const roundOf = (u: OverviewUnit) => [...u.cells].reverse().find((c) => c.status === "held" && c.score != null)?.time_point ?? "";
+const roundOf = (u: OverviewUnit) => tpLabel([...u.cells].reverse().find((c) => c.status === "held" && c.score != null)?.time_point);
 /** The open round's live score, when its session is scheduled and has values. */
 const liveOf = (u: OverviewUnit) => u.cells.find((c) => c.status === "scheduled" && c.score != null);
 /** Weakest first inside a status group; units without a score go last. */
 const byScore = (a: OverviewUnit, b: OverviewUnit) => (a.latest_score ?? 101) - (b.latest_score ?? 101);
-const GROUP_PIE = { behind: 30, at_risk: 45, not_recorded: 0, on_track: 85 } as const;
+/** Real average score of a status group (for its small pie); null when no unit in it has a score. */
+const avgScore = (us: OverviewUnit[]) => {
+  const xs = us.map((u) => u.latest_score).filter((x): x is number => x != null);
+  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+};
 
 export default function Overview() {
   const { data, error, status, loading, reload } = useGet("/api/v1/dashboard/overview");
@@ -23,6 +29,7 @@ export default function Overview() {
   const peek = usePeek();
   const nav = useNavigate();
   const [sel, setSel] = useState<string | null>(null);
+  const { me } = useAuth();
 
   if (loading && !data) return <Skeleton rows={6} />;
   if (status === 404) return <NoCycle />;
@@ -41,9 +48,9 @@ export default function Overview() {
       <div><div className="nm">{u.unit_name}</div><div className="faint tiny">{u.manager ?? ""}</div></div>
       <div className={`why ${u.warnings.length ? "w" : ""}`}>{u.warnings[0] ?? (u.next_session ? `جلسه ${jDayMonth(u.next_session.at)}، ساعت ${jTime(u.next_session.at)}` : "")}</div>
       <div className={`rec ${u.total_krs && u.recorded / u.total_krs < 0.5 ? "lo" : ""}`} title="نتایج کلیدی‌ای که در پایش جاری مقدار گرفته‌اند">
-        {u.total_krs ? <><b className="num">{fa(u.recorded)} از {fa(u.total_krs)}</b> ثبت در {u.current_round}</> : "—"}</div>
+        {u.total_krs ? <><b className="num">{fa(u.recorded)} از {fa(u.total_krs)}</b> ثبت در {tpLabel(u.current_round)}</> : "—"}</div>
       <Bar p={u.latest_score} status={u.status} />
-      <div className="v num" title={u.latest_score == null ? "هنوز پایشی برگزار نشده" : `امتیاز پایش ${roundOf(u)} (آخرین جلسهٔ برگزارشده)`}>{pct(u.latest_score)}
+      <div className="v num" title={u.latest_score == null ? "هنوز پایشی برگزار نشده" : `امتیاز ${roundOf(u)} (آخرین جلسهٔ برگزارشده)`}>{pct(u.latest_score)}
         {u.latest_score != null && <div className="faint tiny">{roundOf(u)}{u.delta != null && <span className={u.delta < 0 ? "bad" : "ok"}> {u.delta < 0 ? "−" : "+"}{fa(Math.abs(u.delta))}</span>}</div>}</div>
     </div>
   );
@@ -52,7 +59,10 @@ export default function Overview() {
     <>
       <Crumb items={["سازمان", "نمای کلی"]} />
       <div className="mh"><div><h1>داشبورد سازمان</h1><div className="sub">{data.cycle.name}</div></div>
-        <ExportButton path="/export/org.xlsx" label="گزارش Excel کل سازمان" /></div>
+        <div className="pickers">
+          {me?.can_hold && <button className="btn" onClick={() => peek.open(<HoldPanel units={data.units} onDone={reload} />)}>ثبت برگزاری جلسه‌ها</button>}
+          <ExportButton path="/export/org.xlsx" label="گزارش Excel کل سازمان" />
+        </div></div>
       <div className="kpis">
         <div className="kpi">
           <span className="l">امتیاز سازمان</span>
@@ -63,7 +73,7 @@ export default function Overview() {
           <span className="l">ثبت پیشرفت در پایش جاری</span>
           <span className="v num">{fa(recorded)}<small>از {fa(totalKrs)} نتیجهٔ کلیدی</small></span>
           <Bar p={totalKrs ? (recorded / totalKrs) * 100 : null} status={statusFor(totalKrs ? (recorded / totalKrs) * 100 : null)} />
-          <span className="h">{totalKrs ? `${pct(Math.round((recorded / totalKrs) * 100))} ثبت شده؛ در اکسل فقط ۵٫۸٪ بود` : "پایش بازی وجود ندارد"}</span>
+          <span className="h">{totalKrs ? `${pct(Math.round((recorded / totalKrs) * 100))} از نتایج کلیدی پایش جاری ثبت شده` : "پایش بازی وجود ندارد"}</span>
         </div>
         <div className="kpi">
           <span className="l">واحدهای نیازمند توجه</span>
@@ -73,7 +83,7 @@ export default function Overview() {
         <div className="kpi">
           <span className="l">جلسهٔ بدون زمان</span>
           <span className="v num">{fa(unscheduled)}<small>واحد</small></span>
-          <span className="h">{unscheduled ? "تا زمان جلسه تعیین نشود، ثبت مقدار باز نمی‌شود" : "همهٔ واحدها زمان جلسه دارند"}</span>
+          <span className="h">{unscheduled ? "ثبت مقدار باز است، ولی اعضا نمی‌دانند تا کی وقت دارند" : "همهٔ واحدها زمان جلسه دارند"}</span>
         </div>
       </div>
       <div className="sec"><h2>واحدها <span className="num">{fa(data.units.length)}</span></h2>
@@ -82,7 +92,7 @@ export default function Overview() {
         <div className="list">
           {groups.map((g) => (
             <div key={g.st}>
-              <div className="grp"><Pie p={GROUP_PIE[g.st]} status={g.st} /> {STATUS_LABEL[g.st]} <span className="faint num">{fa(g.units.length)}</span></div>
+              <div className="grp"><Pie p={avgScore(g.units)} status={g.st} /> {STATUS_LABEL[g.st]} <span className="faint num">{fa(g.units.length)}</span></div>
               {g.units.map((u) => <Row key={u.unit_id} u={u} />)}
             </div>
           ))}
@@ -96,7 +106,7 @@ function Matrix({ data, onOpen }: { data: OverviewT; onOpen: (u: OverviewUnit) =
   const cols = data.time_points.slice(1); // the start session has no score
   return (
     <div className="mx" style={{ gridTemplateColumns: `minmax(170px,1.4fr) repeat(${cols.length},minmax(72px,1fr))` }}>
-      <div className="h h0" />{cols.map((c) => <div key={c} className="h">{c}</div>)}
+      <div className="h h0" />{cols.map((c) => <div key={c} className="h">{tpLabel(c)}</div>)}
       {data.units.map((u) => (
         <div key={u.unit_id} style={{ display: "contents" }}>
           <div className="u">{u.unit_name}</div>
@@ -124,16 +134,16 @@ function UnitPeek({ unit, onGo }: { unit: OverviewUnit; onGo: () => void }) {
         <span className={`badge ${cls}`}>{STATUS_LABEL[unit.status]}</span>
       </div>
       <div className="note"><b style={{ color: "var(--text)" }}>این عدد از کجا آمده؟</b><br />
-        {unit.latest_score == null ? "هنوز جلسه‌ای برگزار نشده است." : `میانگین پیشرفت نتایج کلیدی در پایش ${roundOf(unit)} (آخرین جلسهٔ برگزارشده) ${pct(unit.latest_score)} است${unit.delta != null ? ` و نسبت به پایش قبل ${unit.delta < 0 ? "کاهش" : "افزایش"} ${pct(Math.abs(unit.delta))} داشته` : ""}.`}
-        {live && <> پایش جاری {live.time_point} هنوز برگزار نشده؛ امتیاز آن تا این لحظه {pct(live.score)} است و بعد از «برگزار شد» جای این عدد را می‌گیرد.</>}
+        {unit.latest_score == null ? "هنوز جلسه‌ای برگزار نشده است." : `میانگین پیشرفت نتایج کلیدی در ${roundOf(unit)} (آخرین جلسهٔ برگزارشده) ${pct(unit.latest_score)} است${unit.delta != null ? ` و نسبت به پایش قبل ${unit.delta < 0 ? "کاهش" : "افزایش"} ${pct(Math.abs(unit.delta))} داشته` : ""}.`}
+        {live && <> {tpLabel(live.time_point)} هنوز برگزار نشده؛ امتیاز آن تا این لحظه {pct(live.score)} است و بعد از «برگزار شد» جای این عدد را می‌گیرد.</>}
         {unit.warnings.length > 0 && <> {unit.warnings.join("، ")}.</>}
       </div>
-      <div className="sec" style={{ marginTop: 18 }}><h2>نتایج کلیدی{page.data && <span className="faint tiny" style={{ fontWeight: 400 }}>، پایش {page.data.time_point}{page.data.status !== "held" ? "، تا این لحظه" : ""}</span>}</h2></div>
+      <div className="sec" style={{ marginTop: 18 }}><h2>نتایج کلیدی{page.data && <span className="faint tiny" style={{ fontWeight: 400 }}>، {tpLabel(page.data.time_point)}{page.data.status !== "held" ? "، تا این لحظه" : ""}</span>}</h2></div>
       {page.loading && <Skeleton rows={3} />}
       {page.data?.objectives.flatMap((o) => o.key_results).map((k) => (
         <div className="kr" key={k.id}><Pie p={k.percent} status={k.status} /><span style={{ flex: 1 }}>{k.title}</span><b className={`num ${STATUS_CLASS[k.status]}`}>{pct(k.percent)}</b></div>
       ))}
-      <div style={{ display: "flex", gap: 8, marginTop: 20 }}><button className="btn" onClick={onGo}>باز کردن صفحهٔ جلسه</button></div>
+      <div style={{ display: "flex", gap: 8, marginTop: 20 }}><button className="btn" onClick={onGo}>باز کردن جلسهٔ پایش</button></div>
     </>
   );
 }

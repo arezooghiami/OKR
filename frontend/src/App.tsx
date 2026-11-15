@@ -1,6 +1,6 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { isOrgWide, useAuth } from "./auth/AuthContext";
+import { useAuth } from "./auth/AuthContext";
 import Layout from "./ui/Layout";
 import { Skeleton } from "./ui/parts";
 import Login from "./features/Login";
@@ -14,7 +14,7 @@ const KRDetailPage = lazy(() => import("./features/KRDetail"));
 const Goals = lazy(() => import("./features/Goals"));
 const Admin = lazy(() => import("./features/admin/Admin"));
 const Dossier = lazy(() => import("./features/Dossier"));
-const DossierList = lazy(() => import("./features/Dossier").then((m) => ({ default: m.DossierList })));
+const UnitList = lazy(() => import("./features/Dossier").then((m) => ({ default: m.UnitList })));
 
 function Protected({ children }: { children: ReactNode }) {
   const { me, ready } = useAuth();
@@ -23,13 +23,16 @@ function Protected({ children }: { children: ReactNode }) {
   return me ? <>{children}</> : <Navigate to="/login" state={{ from: loc.pathname }} replace />;
 }
 
+/** First page by role (docs/07 phase 2): senior roles → dashboard, unit managers → their unit,
+ *  everyone else → «KRهای من». */
 function Home() {
   const { me } = useAuth();
-  return isOrgWide(me) ? <Overview /> : <Navigate to="/unit" replace />;
+  if (me?.home === "dashboard") return <Overview />;
+  return <Navigate to={me?.home === "unit" ? "/unit" : "/my"} replace />;
 }
 
 function NotFound() {
-  return <div className="empty"><b>صفحه‌ای پیدا نشد</b><a className="btn o" href="/" style={{ marginTop: 12 }}>بازگشت به نمای کلی</a></div>;
+  return <div className="empty"><b>صفحه‌ای پیدا نشد</b><a className="btn o" href="/" style={{ marginTop: 12 }}>بازگشت به صفحهٔ اول</a></div>;
 }
 
 export default function App() {
@@ -47,7 +50,7 @@ export default function App() {
           <Route path="goals" element={<Goals />} />
           <Route path="alignment" element={<Navigate to="/goals" replace />} />
           <Route path="krs/:id" element={<KRDetailPage />} />
-          <Route path="units" element={<DossierList />} />
+          <Route path="units" element={<UnitList />} />
           <Route path="units/:unitId" element={<Dossier />} />
           <Route path="admin/:tab?" element={<Admin />} />
           <Route path="*" element={<NotFound />} />

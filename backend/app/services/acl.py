@@ -1,7 +1,8 @@
 """Access decision core (PRD 4.9). Pure: callers load grants and the unit tree from the database.
 
 Rules: deny beats allow; undefined = denied; a role's allow only counts when the target unit is
-inside that role's scope for the resource; allows from several roles are unioned.
+inside that role's scope for the resource; allows from several roles are unioned. A per-unit override
+replaces the role's own cell for that one unit (it never widens the scope).
 """
 
 from collections.abc import Callable
@@ -31,6 +32,12 @@ class RoleGrant:
     effects: dict[tuple[str, str], str]  # (resource, action) -> "allow" | "deny"
     scopes: dict[str, Scope]  # resource -> scope
     units: set[str] = field(default_factory=set)
+    overrides: dict[tuple[str, str, str], str] = field(default_factory=dict)  # (unit, resource, action) -> effect
+
+    def effect(self, resource: str, action: str, target: str | None) -> str | None:
+        if target is not None and (target, resource, action) in self.overrides:
+            return self.overrides[(target, resource, action)]
+        return self.effects.get((resource, action))
 
 
 @dataclass
@@ -65,9 +72,11 @@ def decide(
     undefined_roles: list[str] = []
 
     for g in grants:
-        effect = g.effects.get((resource, action))
+        effect = g.effect(resource, action, target_unit)
+        overridden = target_unit is not None and (target_unit, resource, action) in g.overrides
         if effect == "deny":
-            return Decision(False, f"قانون صریح «ممنوع» برای نقش «{g.role}»: {act}.", "deny")
+            where = f" در واحد «{unit_label(target_unit)}» (استثنای واحد)" if overridden else ""
+            return Decision(False, f"قانون صریح «ممنوع» برای نقش «{g.role}»{where}: {act}.", "deny")
         if effect != "allow":
             undefined_roles.append(g.role)
             continue

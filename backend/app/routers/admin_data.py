@@ -257,7 +257,7 @@ class CycleIn(BaseModel):
 def create_cycle(body: CycleIn, request: Request, db: Session = Depends(get_db), acc: Access = Depends(access)):
     _admin(acc)
     if not body.name.strip():
-        raise HTTPException(422, "نام چرخه خالی است")
+        raise HTTPException(422, "نام دوره خالی است")
     if body.ends_on <= body.starts_on:
         raise HTTPException(422, "تاریخ پایان باید بعد از شروع باشد")
     c = Cycle(name=body.name.strip(), starts_on=body.starts_on, ends_on=body.ends_on, status="draft")
@@ -286,7 +286,7 @@ def patch_cycle(cycle_id: uuid.UUID, body: CyclePatch, request: Request, db: Ses
     _admin(acc)
     c = db.get(Cycle, cycle_id)
     if not c:
-        raise HTTPException(404, "چرخه پیدا نشد")
+        raise HTTPException(404, "دوره پیدا نشد")
     before = {"name": c.name, "status": c.status}
     if body.name is not None and body.name.strip():
         c.name = body.name.strip()
@@ -297,12 +297,12 @@ def patch_cycle(cycle_id: uuid.UUID, body: CyclePatch, request: Request, db: Ses
         if body.status not in ("draft", "active", "closed"):
             raise HTTPException(422, "وضعیت نامعتبر است")
         if c.status == "closed":
-            raise HTTPException(409, "چرخهٔ بسته دوباره باز نمی‌شود")
+            raise HTTPException(409, "دورهٔ بسته دوباره باز نمی‌شود")
         if body.status == "active":
             if db.scalars(select(Cycle).where(Cycle.status == "active", Cycle.id != c.id)).first():
-                raise HTTPException(409, "چرخهٔ فعال دیگری وجود دارد؛ ابتدا آن را ببندید")
+                raise HTTPException(409, "دورهٔ فعال دیگری وجود دارد؛ ابتدا آن را ببندید")
             if not db.scalars(select(TimePoint).where(TimePoint.cycle_id == c.id)).first():
-                raise HTTPException(422, "چرخه نقطهٔ زمانی ندارد")
+                raise HTTPException(422, "دوره نقطهٔ زمانی ندارد")
             v = active_org_version(db)
             if v is None:
                 raise HTTPException(422, "ابتدا ساختار سازمان (واحدها) را تعریف کنید")
@@ -320,9 +320,9 @@ def add_time_point(cycle_id: uuid.UUID, body: TimePointIn, db: Session = Depends
     _admin(acc)
     c = db.get(Cycle, cycle_id)
     if not c:
-        raise HTTPException(404, "چرخه پیدا نشد")
+        raise HTTPException(404, "دوره پیدا نشد")
     if c.status == "closed":
-        raise HTTPException(409, "چرخهٔ بسته تغییر نمی‌کند")
+        raise HTTPException(409, "دورهٔ بسته تغییر نمی‌کند")
     try:
         cyc.add_time_point(db, c, body.kind, body.label)
     except cyc.CycleError as e:
@@ -343,7 +343,7 @@ def rename_time_point(tp_id: uuid.UUID, body: TimePointPatch, db: Session = Depe
     if not tp or not body.label.strip():
         raise HTTPException(422 if tp else 404, "برچسب خالی است" if tp else "نقطه پیدا نشد")
     if db.scalars(select(TimePoint).where(TimePoint.cycle_id == tp.cycle_id, TimePoint.label == body.label.strip(), TimePoint.id != tp.id)).first():
-        raise HTTPException(409, "این برچسب در چرخه تکراری است")
+        raise HTTPException(409, "این برچسب در دوره تکراری است")
     tp.label = body.label.strip()
     db.commit()
     return _cycle_out(db, db.get(Cycle, tp.cycle_id))

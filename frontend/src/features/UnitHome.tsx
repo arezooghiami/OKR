@@ -2,10 +2,12 @@ import { useRef } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useGet } from "../api/typed";
 import type { SessionHead, Workspace } from "../api/types";
-import { fa, jDate, jDayMonth, jTime } from "../domain/format";
+import { fa, jDate, jDayMonth, jTime, tpLabel } from "../domain/format";
 import ExportButton from "../ui/ExportButton";
 import { Crumb, Empty, ErrorBox, NoCycle, Skeleton } from "../ui/parts";
 import UnitTable from "./UnitTable";
+import UnitTabs from "../ui/UnitTabs";
+import { useAuth } from "../auth/AuthContext";
 
 const DAY = 86_400_000;
 
@@ -28,7 +30,7 @@ export default function UnitHome() {
   if (units.status === 404) return <NoCycle />;
   if (units.error) return <ErrorBox message={units.error} onRetry={units.reload} />;
   const list = units.data ?? [];
-  if (list.length === 0) return <Empty title="واحدی به شما سپرده نشده است" hint="مدیر سیستم باید در «مدیریت ← کاربران» به شما نقش و واحد بدهد." />;
+  if (list.length === 0) return <Empty title="واحدی به شما سپرده نشده است" hint="سوپر ادمین باید در «مدیریت ← کاربران» به شما نقش و واحد بدهد." />;
   if (!unitId) return <Navigate to={`/unit/${list[0].id}${cycleId ? `?cycle=${cycleId}` : ""}`} replace />;
   return <UnitWorkspace key={`${unitId}-${cycleId}`} unitId={unitId} cycleId={cycleId} units={list} />;
 }
@@ -37,6 +39,7 @@ function UnitWorkspace({ unitId, cycleId, units }: { unitId: string; cycleId: st
   const { data, error, loading, reload } = useGet("/api/v1/units/{unit_id}/workspace", { unit_id: unitId }, { query: { cycle_id: cycleId } });
   const cycles = useGet("/api/v1/cycles");
   const nav = useNavigate();
+  const { me } = useAuth();
   const newObjective = useRef<HTMLInputElement>(null);
   if (loading && !data) return <Skeleton rows={6} />;
   if (error || !data) return <ErrorBox message={error ?? "یافت نشد"} onRetry={reload} />;
@@ -46,7 +49,7 @@ function UnitWorkspace({ unitId, cycleId, units }: { unitId: string; cycleId: st
 
   return (
     <>
-      <Crumb items={[data.unit_name, "واحد من"]} />
+      <Crumb items={[me?.org_wide ? "واحدها" : "واحد من", data.unit_name]} />
       <div className="mh">
         <div>
           <h1>{data.unit_name}</h1>
@@ -70,7 +73,6 @@ function UnitWorkspace({ unitId, cycleId, units }: { unitId: string; cycleId: st
               </select>
             </div>
           )}
-          <Link className="btn o" to={`/units/${unitId}${data.read_only ? `?cycle=${data.cycle.id}` : ""}`}>پروندهٔ واحد</Link>
           <ExportButton path={`/units/${unitId}/export.xlsx?cycle_id=${data.cycle.id}`} label="خروجی Excel" />
         </div>
       </div>
@@ -83,13 +85,15 @@ function UnitWorkspace({ unitId, cycleId, units }: { unitId: string; cycleId: st
         </div>
       )}
 
+      <UnitTabs unitId={unitId} active="table" cycleId={data.read_only ? data.cycle.id : null} />
+
       <div className="sec" style={{ marginTop: 26 }}><h2>جلسه‌های این دوره <span className="num">{fa(data.sessions.length)}</span></h2></div>
       <Timeline sessions={data.sessions} next={data.current_session_id} />
 
       {!data.read_only && !data.start_held && start && <Readiness data={data} start={start} />}
 
       <div className="sec">
-        <h2>اهداف و نتایج کلیدی <span className="num">{fa(data.objectives.length)} هدف، {fa(krCount)} KR</span></h2>
+        <h2>اهداف و نتایج کلیدی <span className="num">{fa(data.objectives.length)} هدف، {fa(krCount)} نتیجهٔ کلیدی</span></h2>
         {data.can_define && <button className="btn" onClick={() => { newObjective.current?.scrollIntoView({ block: "center" }); newObjective.current?.focus(); }}>+ هدف جدید</button>}
       </div>
       {data.read_only ? null : data.can_edit
@@ -107,25 +111,25 @@ function CycleLine({ data }: { data: Workspace }) {
   return (
     <div className="cyc mut">
       <span><b style={{ color: "var(--text)" }}>{data.cycle.name}</b> · {jDate(data.cycle.starts_on)} تا {jDate(data.cycle.ends_on)}</span>
-      <span className="trk" role="progressbar" aria-label="پیشرفت زمانی چرخه" aria-valuenow={Math.round(elapsed)} aria-valuemin={0} aria-valuemax={100}><i style={{ ["--w" as string]: `${elapsed}%` }} /></span>
+      <span className="trk" role="progressbar" aria-label="پیشرفت زمانی دوره" aria-valuenow={Math.round(elapsed)} aria-valuemin={0} aria-valuemax={100}><i style={{ ["--w" as string]: `${elapsed}%` }} /></span>
       <span className="tiny">{data.read_only ? "بسته شده" : Date.now() < s ? `${fa(Math.ceil((s - Date.now()) / DAY))} روز تا شروع` : `${fa(left)} روز مانده`}</span>
     </div>
   );
 }
 
 function Timeline({ sessions, next }: { sessions: SessionHead[]; next: string | null }) {
-  if (sessions.length === 0) return <div className="note">برای این واحد در چرخهٔ جاری جلسه‌ای ساخته نشده است.</div>;
+  if (sessions.length === 0) return <div className="note">برای این واحد در دورهٔ جاری جلسه‌ای ساخته نشده است.</div>;
   return (
-    <div className="tl" aria-label="جلسه‌های چرخه">
+    <div className="tl" aria-label="جلسه‌های دوره">
       {sessions.map((s) => {
         const isNext = s.id === next && s.status !== "held";
         const rel = s.status === "scheduled" ? relDays(s.scheduled_at) : null;
         return (
           <Link key={s.id} to={`/sessions/${s.id}`} className={`${s.status === "held" ? "held" : ""} ${isNext ? "next" : ""}`}>
-            <span className="lb">{s.time_point}<span className={`tiny ${s.status === "held" ? "ok" : s.status === "unscheduled" ? "risk" : "faint"}`} style={{ fontWeight: 600 }}>
+            <span className="lb">{tpLabel(s.time_point)}<span className={`tiny ${s.status === "held" ? "ok" : s.status === "unscheduled" ? "risk" : "faint"}`} style={{ fontWeight: 600 }}>
               {s.status === "held" ? "برگزار شد ✓" : s.status === "unscheduled" ? "بدون زمان" : isNext ? "جلسهٔ بعدی" : "زمان‌بندی‌شده"}</span></span>
             {s.status === "held" && <span className="when mut">{jDayMonth(s.held_at)}</span>}
-            {s.status === "scheduled" && <span className="when">{jDayMonth(s.scheduled_at)} · ساعت {jTime(s.scheduled_at)}</span>}
+            {s.status === "scheduled" && <span className="when">{jDayMonth(s.scheduled_at)}، ساعت {jTime(s.scheduled_at)}</span>}
             {s.status === "unscheduled" && <span className="when faint">هنوز تعیین نشده</span>}
             {s.place && s.status !== "unscheduled" && <span className="faint tiny">{s.place}</span>}
             {rel && <span className="rel">{rel}</span>}
@@ -141,11 +145,11 @@ function Readiness({ data, start }: { data: Workspace; start: SessionHead }) {
   return (
     <div className="ready">
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "baseline" }}>
-        <h2>آمادگی برای جلسهٔ {start.time_point}</h2>
+        <h2>آمادگی برای جلسهٔ {tpLabel(start.time_point)}</h2>
         <span className={`tiny ${left ? "risk" : "ok"}`} style={{ fontWeight: 600 }}>{left ? `${fa(left)} مورد مانده` : "آماده برای جلسه ✓"}</span>
       </div>
       <div className="mut tiny" style={{ marginTop: 4 }}>
-        در این جلسه اهداف، نتایج کلیدی و متصدی‌ها بررسی و تصویب می‌شوند.
+        در این جلسه اهداف، نتایج کلیدی و مسئول‌ها بررسی و تصویب می‌شوند.
         {start.scheduled_at && <> زمان: {jDate(start.scheduled_at)}، ساعت {jTime(start.scheduled_at)}{start.place && `، ${start.place}`}.</>}
       </div>
       <ul>

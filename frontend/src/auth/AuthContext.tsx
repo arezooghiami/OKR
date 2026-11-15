@@ -9,9 +9,9 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-/** Org-wide users (system admin, a role granted without a unit, e.g. observers) land on the organisation
- * overview; people whose roles are tied to units land on their unit. */
-export const isOrgWide = (me: Me | null) => !!me && (me.is_system_admin || me.roles.some((r) => r.units.length === 0));
+/** Org-wide users (super admin, system manager, system expert) see every unit and get the managers' menu.
+ *  The server decides it from the user's permissions (GET /me), so a custom role behaves the same way. */
+export const isOrgWide = (me: Me | null) => !!me && me.org_wide;
 
 const Ctx = createContext<AuthState | null>(null);
 export const useAuth = () => {

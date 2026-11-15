@@ -24,7 +24,7 @@ def _active_cycle(db: Session, cycle_id: uuid.UUID | None = None) -> Cycle:
         return cycle
     cycle = db.scalars(select(Cycle).where(Cycle.status == "active")).first()
     if not cycle:
-        raise HTTPException(404, "چرخهٔ فعالی وجود ندارد")
+        raise HTTPException(404, "دورهٔ فعالی وجود ندارد")
     return cycle
 
 

@@ -24,6 +24,7 @@ from app.services.orgtree import active_org_version, load_tree
 
 USERNAME = re.compile(r"^[A-Za-z0-9_.@-]{3,60}$")
 UNITS_SHEET, USERS_SHEET, HELP_SHEET = "واحدها", "کاربران", "راهنما"
+OLD_ROLE_NAMES = {"ادمین سیستم": "سوپر ادمین", "ناظر": "کارشناس سامانه", "مسئول KR": "کارشناس واحد"}
 UNIT_COLS = {"name": "نام واحد", "parent": "واحد بالادستی", "type": "نوع واحد", "code": "کد", "manager": "مدیر واحد"}
 USER_COLS = {"username": "نام کاربری", "full_name": "نام و نام خانوادگی", "email": "ایمیل", "password": "رمز اولیه",
              "role": "نقش", "unit": "واحد"}
@@ -249,6 +250,9 @@ def _apply_unit(db, v, tree, placed, by_key, types, roots, row: Row, d: dict, pk
 def _apply_users(db: Session, rows: list, units: dict[str, Unit], actor_id: uuid.UUID, rep: OrgReport,
                  unit_errors: set[str]) -> None:
     roles = {key(r.name): r for r in db.scalars(select(Role))}
+    for old, new in OLD_ROLE_NAMES.items():  # spreadsheets written before the five-role model
+        if key(new) in roles:
+            roles.setdefault(key(old), roles[key(new)])
     users = {u.username.lower(): u for u in db.scalars(select(User))}
     created: set[str] = set()
     for r, d in rows:

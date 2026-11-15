@@ -56,7 +56,7 @@ export function NoCycle() {
     <div className="empty">
       <span className="empty-i"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d={EMPTY_ICON.list} /></svg></span>
       <b>دورهٔ فعالی وجود ندارد</b>
-      <div className="mut">مدیر سیستم باید در «مدیریت ← چرخه و جلسه‌ها» یک چرخه بسازد و فعال کند؛ پیش از آن واحدها و کاربران را تعریف کنید.</div>
+      <div className="mut">سوپر ادمین باید در «مدیریت ← دوره و جلسه‌ها» یک دوره بسازد و فعال کند؛ پیش از آن واحدها و کاربران را تعریف کنید.</div>
       <a className="btn o" href="/admin/units" style={{ marginTop: 12 }}>رفتن به مدیریت</a>
     </div>
   );

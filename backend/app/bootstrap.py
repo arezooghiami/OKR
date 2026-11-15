@@ -17,7 +17,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core import audit
 from app.core.db import Base, get_engine
 from app.core.security import hash_password
-from app.defaults import install_roles, install_unit_types
+from app.defaults import SUPER_ADMIN, install_roles, install_unit_types
 from app.models import Membership, User
 
 
@@ -39,7 +39,7 @@ def install(db, username: str, password: str | None) -> str | None:
     admin = User(username=username, full_name="مدیر سیستم", password_hash=hash_password(password), is_system_admin=True)
     db.add(admin)
     db.flush()
-    db.add(Membership(user_id=admin.id, unit_id=None, role_id=roles["ادمین سیستم"].id))
+    db.add(Membership(user_id=admin.id, unit_id=None, role_id=roles[SUPER_ADMIN].id))
     audit.record(db, actor_id=admin.id, action="bootstrap", resource="system", after={"admin": username})
     db.commit()
     return generated

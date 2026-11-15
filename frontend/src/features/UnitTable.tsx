@@ -4,7 +4,7 @@ import { api } from "../api/client";
 import { useGet } from "../api/typed";
 import type { Workspace, WorkspaceKR, WorkspaceObjective } from "../api/types";
 import { STATUS_CLASS, STATUS_LABEL } from "../domain/calc";
-import { fa, parseNumber, pct } from "../domain/format";
+import { fa, parseNumber, pct, tpLabel } from "../domain/format";
 
 const code = (c: string) => c.split(".").map((p) => fa(p)).join(".");
 const TRASH = "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3";
@@ -23,11 +23,21 @@ export default function UnitTable({ data, reload, newObjectiveRef }: {
   const people: Opt[] = (members.data ?? []).map((m) => ({ id: m.id, label: m.full_name }));
   const goalOpts: Opt[] = (goals.data ?? []).map((g) => ({ id: g.id, label: g.title }));
   const [adding, setAdding] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const allKRs = data.objectives.flatMap((o) => o.key_results);
+  const toggle = (ids: string[], on: boolean) => setPicked((s) => {
+    const n = new Set(s);
+    ids.forEach((id) => (on ? n.add(id) : n.delete(id)));
+    return n;
+  });
 
   return (
+    <>
+    {canEdit && <OwnerBar unitId={data.unit_id} picked={picked} people={people} krs={allKRs}
+      onPick={(ids) => setPicked(new Set(ids))} onDone={() => { setPicked(new Set()); reload(); }} />}
     <div className="xlw">
       <table className="xl">
-        <colgroup><col style={{ width: 56 }} /><col /><col style={{ width: 86 }} /><col style={{ width: 86 }} /><col style={{ width: 92 }} />
+        <colgroup><col style={{ width: canEdit ? 84 : 56 }} /><col /><col style={{ width: 86 }} /><col style={{ width: 86 }} /><col style={{ width: 92 }} />
           <col style={{ width: 120 }} /><col style={{ width: 136 }} /><col style={{ width: 184 }} />{(canEdit || canDelete) && <col style={{ width: 48 }} />}</colgroup>
         <thead><tr>
           <th>کد</th><th>نتیجهٔ کلیدی</th><th className="c">خط مبنا</th><th className="c">هدف</th><th className="c">آخرین مقدار</th>
@@ -37,12 +47,54 @@ export default function UnitTable({ data, reload, newObjectiveRef }: {
           {data.objectives.length === 0 && <tr><td colSpan={9} className="mut" style={{ padding: 18, textAlign: "center" }}>هنوز هدفی برای این دوره تعریف نشده است.</td></tr>}
           {data.objectives.map((o) => (
             <ObjectiveRows key={`${o.id}-${o.definition_version}`} o={o} people={people} goals={goalOpts} canEdit={canEdit} canDefine={canDefine}
+              picked={picked} onPick={toggle}
               canDelete={canDelete} adding={adding === o.id} onAdd={() => setAdding(o.id)} onAdded={() => { setAdding(null); reload(); }}
               onCancelAdd={() => setAdding(null)} reload={reload} />
           ))}
           {canDefine && <NewObjectiveRow unitId={data.unit_id} inputRef={newObjectiveRef} onDone={reload} />}
         </tbody>
       </table>
+    </div>
+    </>
+  );
+}
+
+/** Bulk owner assignment (docs/07 phase 2): tick KRs, pick a person, apply. "Without owner" selects the gaps
+ *  an Excel import usually leaves. Each change is a normal definition version with its audit record. */
+function OwnerBar({ unitId, picked, people, krs, onPick, onDone }: {
+  unitId: string; picked: Set<string>; people: Opt[]; krs: WorkspaceKR[]; onPick: (ids: string[]) => void; onDone: () => void;
+}) {
+  const [owner, setOwner] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const orphans = krs.filter((k) => !k.owner_id);
+  const apply = () => {
+    setBusy(true); setMsg(null);
+    api<{ changed: number }>(`/units/${unitId}/key-results/owner`, { method: "POST", body: { key_result_ids: [...picked], owner_id: owner || null } })
+      .then((r) => { setMsg({ ok: true, text: `مسئول ${fa(r.changed)} نتیجهٔ کلیدی ثبت شد` }); setOwner(""); onDone(); })
+      .catch((e: Error) => setMsg({ ok: false, text: e.message })).finally(() => setBusy(false));
+  };
+  if (picked.size === 0) {
+    return (
+      <div className="ownbar quiet">
+        {orphans.length > 0
+          ? <><span className="risk">{fa(orphans.length)} نتیجهٔ کلیدی مسئول ندارد.</span> <button className="lnk" onClick={() => onPick(orphans.map((k) => k.id))}>انتخاب همه برای تعیین مسئول</button></>
+          : <span className="faint">برای تعیین مسئول چند نتیجهٔ کلیدی با هم، کنار کدشان تیک بزنید.</span>}
+        {msg && <span className={msg.ok ? "ok" : "bad"} role="status">{msg.text}</span>}
+      </div>
+    );
+  }
+  return (
+    <div className="ownbar" role="region" aria-label="تعیین مسئول گروهی">
+      <b>{fa(picked.size)} نتیجهٔ کلیدی انتخاب شد</b>
+      <label className="sr-only" htmlFor="bulk-owner">مسئول</label>
+      <select id="bulk-owner" value={owner} onChange={(e) => setOwner(e.target.value)}>
+        <option value="">بدون مسئول</option>
+        {people.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+      </select>
+      <button className="btn mini" disabled={busy} onClick={apply}>{busy ? "در حال ثبت…" : "ثبت مسئول"}</button>
+      <button className="btn o mini" onClick={() => onPick([])}>لغو انتخاب</button>
+      {msg && !msg.ok && <span className="bad" role="alert">{msg.text}</span>}
     </div>
   );
 }
@@ -100,10 +152,13 @@ function ReasonRow({ text, action, danger, onSubmit, onCancel }: { text: string;
   );
 }
 
-function ObjectiveRows({ o, people, goals, canEdit, canDefine, canDelete, adding, onAdd, onAdded, onCancelAdd, reload }: {
+function ObjectiveRows({ o, people, goals, canEdit, canDefine, canDelete, adding, onAdd, onAdded, onCancelAdd, reload, picked, onPick }: {
   o: WorkspaceObjective; people: Opt[]; goals: Opt[]; canEdit: boolean; canDefine: boolean; canDelete: boolean;
   adding: boolean; onAdd: () => void; onAdded: () => void; onCancelAdd: () => void; reload: () => void;
+  picked: Set<string>; onPick: (ids: string[], on: boolean) => void;
 }) {
+  const ids = o.key_results.map((k) => k.id);
+  const all = ids.length > 0 && ids.every((id) => picked.has(id));
   const [err, setErr] = useState<string | null>(null);
   const [del, setDel] = useState(false);
   const patch = (body: object) => api(`/objectives/${o.id}`, { method: "PATCH", body }).then(reload).catch((e: Error) => setErr(e.message));
@@ -111,6 +166,7 @@ function ObjectiveRows({ o, people, goals, canEdit, canDefine, canDelete, adding
     <>
       <tr className="xo"><td colSpan={9}>
         <div className="xoh">
+          {canEdit && ids.length > 0 && <input type="checkbox" className="pickbox" aria-label={`انتخاب همهٔ نتیجه‌های کلیدی هدف ${o.number}`} checked={all} onChange={(e) => onPick(ids, e.target.checked)} />}
           <span className="no">هدف {fa(o.number)}</span>
           <div className="xot"><Cell value={o.title} label={`عنوان هدف ${o.number}`} disabled={!canDefine} onSave={(title) => title.trim() && patch({ title })} /></div>
           <div className="xoo"><span>مسئول هدف</span><Pick value={o.owner_id} options={people} empty="تعیین نشده" label="مسئول هدف" disabled={!canDefine} onSave={(owner_id) => patch({ owner_id })} /></div>
@@ -122,15 +178,17 @@ function ObjectiveRows({ o, people, goals, canEdit, canDefine, canDelete, adding
       {del && <ReasonRow text={`هدف «${o.title}» و ${fa(o.key_results.length)} نتیجهٔ کلیدی‌اش از فهرست حذف می‌شوند ولی در تاریخچه می‌مانند.`} action="حذف هدف" danger
         onCancel={() => setDel(false)}
         onSubmit={(reason) => api(`/objectives/${o.id}/archive`, { method: "POST", body: { reason } }).then(reload).catch((e: Error) => { setErr(e.message); setDel(false); })} />}
-      {o.key_results.map((k) => <KRRow key={`${k.id}-${k.version}`} k={k} people={people} goals={goals} canEdit={canEdit} canDelete={canDelete} reload={reload} />)}
+      {o.key_results.map((k) => <KRRow key={`${k.id}-${k.version}`} k={k} people={people} goals={goals} canEdit={canEdit} canDelete={canDelete} reload={reload}
+        picked={picked.has(k.id)} onPick={(on) => onPick([k.id], on)} />)}
       {o.key_results.length === 0 && !adding && <tr className="empty"><td colSpan={9}>این هدف هنوز نتیجهٔ کلیدی ندارد.{canDefine && <> <button className="xadd" onClick={onAdd}>+ افزودن</button></>}</td></tr>}
-      {adding && <NewKRRow objectiveId={o.id} people={people} goals={goals} onDone={onAdded} onCancel={onCancelAdd} />}
+      {adding && <NewKRRow objectiveId={o.id} defaultOwner={o.owner_id} people={people} goals={goals} onDone={onAdded} onCancel={onCancelAdd} />}
     </>
   );
 }
 
-function KRRow({ k, people, goals, canEdit, canDelete, reload }: {
+function KRRow({ k, people, goals, canEdit, canDelete, reload, picked, onPick }: {
   k: WorkspaceKR; people: Opt[]; goals: Opt[]; canEdit: boolean; canDelete: boolean; reload: () => void;
+  picked: boolean; onPick: (on: boolean) => void;
 }) {
   const [err, setErr] = useState<string | null>(null);
   const [pendingTarget, setPendingTarget] = useState<number | null>(null);
@@ -144,15 +202,16 @@ function KRRow({ k, people, goals, canEdit, canDelete, reload }: {
   return (
     <>
       <tr className={`krow${err ? " has-err" : ""}`} key={nonce}>
-        <td><Link className="xcode num" to={`/krs/${k.id}`} title="تاریخچه و جزئیات">{code(k.code)}</Link></td>
-        <td><Cell value={k.title} multiline label={`عنوان KR ${k.code}`} disabled={!canEdit} onSave={(title) => title.trim() && save({ title })} /></td>
+        <td><span className="xcodec">{canEdit && <input type="checkbox" className="pickbox" aria-label={`انتخاب ${k.code}`} checked={picked} onChange={(e) => onPick(e.target.checked)} />}
+          <Link className="xcode num" to={`/krs/${k.id}`} title="تاریخچه و جزئیات">{code(k.code)}</Link></span></td>
+        <td><Cell value={k.title} multiline label={`عنوان نتیجهٔ کلیدی ${k.code}`} disabled={!canEdit} onSave={(title) => title.trim() && save({ title })} /></td>
         <td className="c">{milestone ? <span className="ro-n faint">—</span>
           : <Cell value={numText(k.baseline)} num label={`خط مبنای ${k.code}`} disabled={!canEdit} onSave={(v) => save({ baseline: parseNumber(v) })} />}</td>
         <td className="c">{milestone ? <span className="ro-n">۱۰۰٪</span>
           : <Cell value={numText(k.target)} num label={`هدف ${k.code}`} disabled={!canEdit} onSave={(v) => { const t = parseNumber(v); if (t !== undefined) setPendingTarget(t); }} />}</td>
         <td className="c"><span className="ro-n num">{k.progress_value == null ? "—" : fa(k.progress_value, 4)}</span></td>
-        <td><span className="xp" title={k.progress_round ? `${STATUS_LABEL[st]} · پایش ${k.progress_round}${k.progress_live ? "، تا این لحظه" : ""}` : "ثبت‌نشده"}>
-          <b className={`num ${k.progress == null ? "faint" : STATUS_CLASS[st]}`}>{pct(k.progress)}</b><small>{k.progress_round ?? ""}</small>
+        <td><span className="xp" title={k.progress_round ? `${STATUS_LABEL[st]}، ${tpLabel(k.progress_round)}${k.progress_live ? "، تا این لحظه" : ""}` : "ثبت‌نشده"}>
+          <b className={`num ${k.progress == null ? "faint" : STATUS_CLASS[st]}`}>{pct(k.progress)}</b><small>{tpLabel(k.progress_round)}</small>
           <span className={`mb ${STATUS_CLASS[st]}`}><i style={{ "--w": `${Math.max(0, Math.min(100, k.progress ?? 0))}%` } as React.CSSProperties} /></span></span></td>
         <td><Pick value={k.owner_id} options={people.length ? people : k.owner_id ? [{ id: k.owner_id, label: k.owner_name ?? "" }] : []} empty="بدون مسئول" label={`مسئول ${k.code}`} disabled={!canEdit} onSave={(owner_id) => save({ owner_id })} /></td>
         <td><Pick value={k.goal?.id ?? null} options={goals} empty="—" label={`هدف کلان ${k.code}`} disabled={!canEdit} onSave={(strategic_goal_id) => save({ strategic_goal_id })} /></td>
@@ -167,8 +226,11 @@ function KRRow({ k, people, goals, canEdit, canDelete, reload }: {
   );
 }
 
-function NewKRRow({ objectiveId, people, goals, onDone, onCancel }: { objectiveId: string; people: Opt[]; goals: Opt[]; onDone: () => void; onCancel: () => void }) {
-  const [f, setF] = useState({ title: "", baseline: "", target: "", owner: "", goal: "" });
+function NewKRRow({ objectiveId, defaultOwner, people, goals, onDone, onCancel }: {
+  objectiveId: string; defaultOwner: string | null; people: Opt[]; goals: Opt[]; onDone: () => void; onCancel: () => void;
+}) {
+  // the objective's owner is the default owner of its new KRs (docs/07 phase 2)
+  const [f, setF] = useState({ title: "", baseline: "", target: "", owner: defaultOwner ?? "", goal: "" });
   const [err, setErr] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
   const submit = () => {
@@ -186,7 +248,7 @@ function NewKRRow({ objectiveId, people, goals, onDone, onCancel }: { objectiveI
     <>
       <tr className="newr">
         <td className="faint">جدید</td>
-        <td><input autoFocus className="cell" aria-label="عنوان KR جدید" placeholder="عنوان نتیجهٔ کلیدی" value={f.title} onChange={set("title")} onKeyDown={enter} /></td>
+        <td><input autoFocus className="cell" aria-label="عنوان نتیجهٔ کلیدی جدید" placeholder="عنوان نتیجهٔ کلیدی" value={f.title} onChange={set("title")} onKeyDown={enter} /></td>
         <td><input className="cell num" aria-label="خط مبنا" placeholder="۰" inputMode="decimal" value={f.baseline} onChange={set("baseline")} onKeyDown={enter} /></td>
         <td><input className="cell num" aria-label="هدف" placeholder="عدد" inputMode="decimal" value={f.target} onChange={set("target")} onKeyDown={enter} /></td>
         <td colSpan={2} className="faint tiny">بدون عدد هدف = درصدی (۰ تا ۱۰۰)</td>

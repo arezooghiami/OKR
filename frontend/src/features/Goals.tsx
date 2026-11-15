@@ -88,7 +88,7 @@ export default function Goals() {
         <p className="gl-sum">{fa(linked)} از {fa(total)} نتیجهٔ کلیدی این دوره به یک هدف کلان وصل‌اند
           {data.unlinked.krs > 0 && <span className="risk">، {fa(data.unlinked.krs)} مورد وصل نیست</span>}.</p>
       )}
-      {data.goals.length === 0 && <Empty title="هنوز هدف کلانی تعریف نشده است" hint="مدیر سیستم از «راه‌اندازی ← اهداف کلان» آن‌ها را تعریف می‌کند." />}
+      {data.goals.length === 0 && <Empty title="هنوز هدف کلانی تعریف نشده است" hint="سوپر ادمین از «راه‌اندازی ← اهداف کلان» آن‌ها را تعریف می‌کند." />}
       <div className="gls">
         {data.goals.map((g) => <Goal key={g.id} g={g} open={open.has(g.id ?? "")} onToggle={() => toggle(g.id ?? "")} />)}
         {data.goals.length > 0 && <Goal g={data.unlinked} unlinked open={open.has("none")} onToggle={() => toggle("none")} />}

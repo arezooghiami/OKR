@@ -4,7 +4,7 @@ import { api } from "../api/client";
 import { useGet } from "../api/typed";
 import type { KRDetail, Version } from "../api/types";
 import { STATUS_CLASS, STATUS_LABEL } from "../domain/calc";
-import { fa, jDate, pct } from "../domain/format";
+import { fa, jDate, pct, tpLabel } from "../domain/format";
 import { Crumb, ErrorBox, Skeleton } from "../ui/parts";
 
 const CTX: Record<string, string> = { initial: "ایجاد اولیه", in_session: "اصلاح در جلسه", between: "بین جلسات", after_session: "پس از جلسه" };
@@ -19,7 +19,7 @@ function Chart({ series }: { series: KRDetail["series"] }) {
       <path d={"M" + pts.map(({ s, i }) => `${x(i)},${y(s.percent!)}`).join(" L")} fill="none" stroke="var(--text-muted)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
       {pts.map(({ s, i }, k) => <g key={i}><circle cx={x(i)} cy={y(s.percent!)} r={k === pts.length - 1 ? 5 : 3.5} fill={k === pts.length - 1 ? "var(--text)" : "var(--surface)"} stroke="var(--text-muted)" strokeWidth="2" />
         <text x={x(i)} y={y(s.percent!) - 11} fontSize="14" fontWeight="600" textAnchor="middle" fill="var(--text)">{fa(Math.round(s.percent!))}</text></g>)}
-      {series.map((s, i) => <text key={i} x={x(i)} y={H - 4} fontSize="13" textAnchor="middle" fill="var(--text-faint)">{s.label}</text>)}
+      {series.map((s, i) => <text key={i} x={x(i)} y={H - 4} fontSize="13" textAnchor="middle" fill="var(--text-faint)">{tpLabel(s.label)}</text>)}
     </svg>
   );
 }

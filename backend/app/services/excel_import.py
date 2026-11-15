@@ -26,13 +26,16 @@ from app.models import (
     Cycle,
     KeyResult,
     KRCollaborator,
+    Membership,
     Objective,
     ReviewEntry,
+    Role,
     StrategicGoal,
     TimePoint,
     Unit,
     UnitPlacement,
     UnitSession,
+    User,
 )
 from app.services import cycles as cyc
 from app.services import okr as okr_svc
@@ -60,7 +63,7 @@ def key(s: str) -> str:
 
 PLACEHOLDERS = {key(x) for x in (
     "توضیحات", "خط مبنا", "هدف", "هدف کسب و کاری", "تیم‌های همکار", "شرح انتظار", "عنوان هدف", "میزان پیشرفت",
-    "درصد پیشرفت",
+    "درصد پیشرفت", "مسئول",
 )}
 _NUM = re.compile(r"^[+-]?\d+(?:\.\d+)?$")
 _LEADING_NUM = re.compile(r"^\s*([+-]?\d[\d,]*(?:\.\d+)?)\s*([^\d]*)$")
@@ -128,6 +131,7 @@ class PKR:
     rounds: list[PRound]
     extra_lines: list[str] = field(default_factory=list)  # kept in the description so nothing is lost
     issues: list[Issue] = field(default_factory=list)
+    owner_text: str | None = None  # optional «مسئول» column: a user's full name or username
 
 
 @dataclass
@@ -164,7 +168,9 @@ _ROUND = re.compile(r"^\s*R\s*(\d+)\s*$", re.I)
 TEMPLATE_SHEETS = {key("الگو"), "template"}
 DEFAULT_COLS = {"desc": 2, "baseline": 3, "target": 4, "goal": 5, "teams": 6, "expect": 7}
 HEADERS = {key("توضیحات"): "desc", key("خط مبنا"): "baseline", key("هدف"): "target",
-           key("هدف کسب و کاری"): "goal", key("تیم‌های همکار"): "teams", key("شرح انتظار"): "expect"}
+           key("هدف کسب و کاری"): "goal", key("تیم‌های همکار"): "teams", key("شرح انتظار"): "expect",
+           # optional, not in the original template: who records this KR
+           **{key(x): "owner" for x in ("مسئول", "مسئول KR", "مسئول نتیجه کلیدی", "مسئول نتیجهٔ کلیدی")}}
 
 
 def _columns(row: tuple) -> tuple[dict[str, int], dict[int, int], list[tuple[str, int]]]:
@@ -235,8 +241,10 @@ def _parse_kr(row: tuple, code: str, r: int, cols: dict[str, int], rounds: dict[
         if t := text(_cell(row, i)):
             extra.append(f"{label} (ستون دوم اکسل): {t}")
     rs = [p for n, i in sorted(rounds.items()) if (p := _parse_round(row, n, i))]
+    owner = text(_cell(row, cols["owner"])) if "owner" in cols else None
     return PKR(code, r, norm(title), desc, vals["baseline"], vals["target"], text(_cell(row, cols["goal"])),
-               text(_cell(row, cols["teams"])), text(_cell(row, cols["expect"])), rs, extra, issues)
+               text(_cell(row, cols["teams"])), text(_cell(row, cols["expect"])), rs, extra, issues,
+               norm(owner) if owner else None)
 
 
 def _parse_sheet(name: str, rows: list[tuple], template_titles: set[str] = frozenset()) -> PSheet | None:
@@ -453,6 +461,27 @@ def _kind(kr: PKR) -> tuple[str, float | None, float | None, Issue | None]:
     return "milestone", None, None, Issue("info", f"KR {kr.code}", f"{msg}؛ به‌صورت درصدی (۰ تا ۱۰۰) ثبت شد")
 
 
+def _people(db: Session) -> dict[str, uuid.UUID]:
+    """Active users by normalised full name and by username (a full name shared by two people matches neither)."""
+    out: dict[str, uuid.UUID] = {}
+    dup: set[str] = set()
+    for u in db.scalars(select(User).where(User.is_active)):
+        for k in {key(u.full_name), key(u.username)}:
+            if k in out and out[k] != u.id:
+                dup.add(k)
+            out[k] = u.id
+    return {k: v for k, v in out.items() if k not in dup}
+
+
+def _unit_manager(db: Session, unit_id: uuid.UUID) -> uuid.UUID | None:
+    """The unit manager of this unit (first by name), the default owner of imported objectives and KRs."""
+    from app.defaults import UNIT_MANAGER
+    return db.scalars(select(Membership.user_id).join(Role, Role.id == Membership.role_id)
+                      .join(User, User.id == Membership.user_id)
+                      .where(Membership.unit_id == unit_id, Role.name == UNIT_MANAGER, User.is_active)
+                      .order_by(User.full_name).limit(1)).first()
+
+
 def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
                  mapping: dict[str, SheetChoice] | None = None) -> ImportReport:
     """Write the workbook into the active cycle. Never commits; the caller commits or rolls back."""
@@ -462,7 +491,7 @@ def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
     if cycle is None:
         sheets = [SheetReport(s.name, "skip", None, None, "error", len(s.objectives), sum(len(o.krs) for o in s.objectives))
                   for s in book.sheets]
-        return ImportReport(None, [], ["چرخهٔ فعالی وجود ندارد. ابتدا در «چرخه و جلسه‌ها» یک چرخه بسازید و فعال کنید."],
+        return ImportReport(None, [], ["دورهٔ فعالی وجود ندارد. ابتدا در «دوره و جلسه‌ها» یک دوره بسازید و فعال کنید."],
                             sheets, book.ignored_sheets, [], [])
 
     reviews = list(db.scalars(select(TimePoint).where(TimePoint.cycle_id == cycle.id, TimePoint.kind == "review")
@@ -472,6 +501,7 @@ def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
     report = ImportReport(cycle, [t.label for t in reviews], [], [], book.ignored_sheets, [], [])
     goal_use: dict[str, dict] = {}
     unmatched: dict[str, int] = {}
+    people = _people(db)
     by_id = {u.id: u for u in units}
     pending_collab: list[tuple[KeyResult, Unit, PKR, SheetReport]] = []
     imported_now: set[uuid.UUID] = set()
@@ -500,7 +530,7 @@ def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
             existing = len(db.scalars(select(Objective.id).where(Objective.cycle_id == cycle.id,
                                                                  Objective.unit_id == unit.id)).all())
             if existing:
-                sr.issues.insert(0, Issue("info", "واحد", f"این واحد از قبل {existing} هدف در این چرخه دارد؛ "
+                sr.issues.insert(0, Issue("info", "واحد", f"این واحد از قبل {existing} هدف در این دوره دارد؛ "
                                                           "اهداف اکسل کنار آن‌ها اضافه می‌شوند"))
         else:
             name = norm(choice.name or ps.name)
@@ -515,9 +545,10 @@ def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
         imported_now.add(unit.id)
         sr.unit_id, sr.unit_name = unit.id, unit.name
         sessions = {s.time_point_id: s for s in db.scalars(select(UnitSession).where(UnitSession.unit_id == unit.id))}
+        manager = _unit_manager(db, unit.id)  # default owner of every objective, and of KRs with no «مسئول»
         for po in ps.objectives:
             obj = okr_svc.create_objective(db, cycle_id=cycle.id, unit_id=unit.id, actor_id=actor_id,
-                                           data={"title": po.title}, reason=REASON)
+                                           data={"title": po.title, "owner_id": manager}, reason=REASON)
             for pk in po.krs:
                 kind, b, t, kind_issue = _kind(pk)
                 if kind_issue:
@@ -548,7 +579,14 @@ def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
                 desc = "\n".join(x for x in [pk.description, *lines] if x) or None
                 data = {"title": pk.title, "description": desc, "kind": kind, "baseline": b, "target": t,
                         "strategic_goal_id": goal.id if goal else None, "expectation": pk.expectation,
-}
+                        "owner_id": manager}
+                if pk.owner_text:
+                    who = people.get(key(pk.owner_text))
+                    if who is None:
+                        sr.issues.append(Issue("warning", f"KR {pk.code}", f"مسئول «{pk.owner_text[:40]}» با هیچ کاربری "
+                                                                           "تطبیق نخورد؛ مسئول هدف گذاشته شد"))
+                    else:
+                        data["owner_id"] = who
                 try:
                     kr = okr_svc.create_kr(db, objective=obj, actor_id=actor_id, data=data, reason=REASON)
                 except InvalidDefinition as e:
@@ -566,7 +604,7 @@ def apply_import(db: Session, book: ParsedBook, *, actor_id, file_name: str,
                         continue
                     where = f"KR {pk.code} · R{rd.n}"
                     if rd.n > len(reviews):
-                        sr.issues.append(Issue("warning", where, f"چرخه پایش R{rd.n} ندارد؛ این مقدار وارد نشد"))
+                        sr.issues.append(Issue("warning", where, f"دوره پایش R{rd.n} ندارد؛ این مقدار وارد نشد"))
                         continue
                     sess = sessions.get(reviews[rd.n - 1].id)
                     if sess is None or sess.status == "held":

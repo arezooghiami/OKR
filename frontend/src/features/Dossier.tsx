@@ -3,15 +3,16 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { useGet } from "../api/typed";
 import type { Dossier as DossierT, DossierCycle, DossierKR } from "../api/types";
 import { STATUS_CLASS, STATUS_LABEL, statusFor } from "../domain/calc";
-import { fa, faDigits, jDate, jDateTime, pct } from "../domain/format";
+import { fa, faDigits, jDate, jDateTime, pct, tpLabel } from "../domain/format";
 import ExportButton from "../ui/ExportButton";
 import { Crumb, Empty, ErrorBox, Skeleton } from "../ui/parts";
+import UnitTabs from "../ui/UnitTabs";
 
 const ROUND_STATUS: Record<string, string> = { held: "برگزار شد", scheduled: "زمان‌بندی شده", unscheduled: "بدون زمان" };
 const EVENT_CLASS: Record<string, string> = { create: "ok", archive: "bad", value: "ac", session: "none", update: "risk", unit: "none", align: "none" };
 
-/** /units — find a unit and open its dossier. */
-export function DossierList() {
+/** /units — every unit the user can see; opens the unit page (table · session · file tabs). */
+export function UnitList() {
   const units = useGet("/api/v1/me/units");
   const overview = useGet("/api/v1/dashboard/overview");
   const [q, setQ] = useState("");
@@ -22,21 +23,21 @@ export function DossierList() {
   }, [units.data, overview.data, q]);
   if (units.loading && !units.data) return <Skeleton />;
   if (units.error) return <ErrorBox message={units.error} onRetry={units.reload} />;
-  if ((units.data ?? []).length === 1) return <Navigate to={`/units/${units.data![0].id}`} replace />;
+  if ((units.data ?? []).length === 1) return <Navigate to={`/unit/${units.data![0].id}`} replace />;
   return (
     <>
-      <Crumb items={["سازمان", "پروندهٔ واحدها"]} />
-      <div className="mh"><div><h1>پروندهٔ واحدها</h1><p className="faint">همهٔ اطلاعات و تاریخچهٔ هر واحد: اعضا، کارنامهٔ دوره‌ها، مقدار هر KR در هر پایش و همهٔ تغییرات.</p></div></div>
+      <Crumb items={["سازمان", "واحدها"]} />
+      <div className="mh"><div><h1>واحدها</h1><p>یک واحد را باز کنید: جدول اهداف و نتایج کلیدی، جلسهٔ پایش و پرونده و تاریخچه‌اش هر سه در صفحهٔ همان واحد است.</p></div></div>
       <input className="srch dos-q" autoFocus placeholder="جستجوی نام واحد…" aria-label="جستجوی واحد" value={q} onChange={(e) => setQ(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && rows[0] && nav(`/units/${rows[0].id}`)} />
+        onKeyDown={(e) => e.key === "Enter" && rows[0] && nav(`/unit/${rows[0].id}`)} />
       {rows.length === 0 && <Empty icon="search" title="واحدی با این نام پیدا نشد" hint="بخش کوتاه‌تری از نام واحد را امتحان کنید." />}
       <div className="dos-list">
         {rows.map((u) => {
           const st = u.o ? statusFor(u.o.latest_score) : null;
           return (
-            <Link key={u.id} to={`/units/${u.id}`} className="dos-li">
+            <Link key={u.id} to={`/unit/${u.id}`} className="dos-li">
               <b>{u.name}</b>
-              <span className="faint tiny">{u.o?.current_round && u.o.total_krs ? `${fa(u.o.recorded)} از ${fa(u.o.total_krs)} KR ثبت در ${u.o.current_round}` : ""}</span>
+              <span className="faint tiny">{u.o?.current_round && u.o.total_krs ? `${fa(u.o.recorded)} از ${fa(u.o.total_krs)} نتیجهٔ کلیدی ثبت در ${tpLabel(u.o.current_round)}` : ""}</span>
               {st && <span className={`badge ${STATUS_CLASS[st]}`}>{u.o?.latest_score != null ? pct(u.o.latest_score) : STATUS_LABEL[st]}</span>}
             </Link>
           );
@@ -62,7 +63,7 @@ function Scorecard({ cycles, selected, onPick }: { cycles: DossierCycle[]; selec
   return (
     <div className="tw">
       <table className="dt dos-t">
-        <thead><tr><th>دوره</th><th>اهداف · KR</th><th>پایش‌ها</th><th>آخرین امتیاز</th></tr></thead>
+        <thead><tr><th>دوره</th><th>اهداف، نتایج کلیدی</th><th>پایش‌ها</th><th>آخرین امتیاز</th></tr></thead>
         <tbody>
           {cycles.map((c) => (
             <tr key={c.id} className={c.id === selected ? "on" : undefined} onClick={() => onPick(c.id)} style={{ cursor: "pointer" }}>
@@ -72,7 +73,7 @@ function Scorecard({ cycles, selected, onPick }: { cycles: DossierCycle[]; selec
                 <div className="dos-rounds">
                   {c.rounds.filter((r) => r.kind !== "start").map((r) => (
                     <span key={r.label} className={`dos-r ${r.status}`} title={ROUND_STATUS[r.status]}>
-                      {r.label} <b className={r.score != null ? STATUS_CLASS[statusFor(r.score)] : "faint"}>{r.score != null ? pct(r.score) : "—"}</b>
+                      {tpLabel(r.label)} <b className={r.score != null ? STATUS_CLASS[statusFor(r.score)] : "faint"}>{r.score != null ? pct(r.score) : "—"}</b>
                       {r.status === "scheduled" && r.total > 0 && <small className="faint"> ({fa(r.recorded)}/{fa(r.total)})</small>}
                     </span>
                   ))}
@@ -95,11 +96,11 @@ function Matrix({ d }: { d: DossierT }) {
   return (
     <>
       {archivedCount > 0 && (
-        <label className="dos-toggle"><input type="checkbox" checked={deleted} onChange={(e) => setDeleted(e.target.checked)} /> نمایش {fa(archivedCount)} KR حذف‌شده</label>
+        <label className="dos-toggle"><input type="checkbox" checked={deleted} onChange={(e) => setDeleted(e.target.checked)} /> نمایش {fa(archivedCount)} نتیجهٔ کلیدی حذف‌شده</label>
       )}
       <div className="tw">
         <table className="dt dos-m">
-          <thead><tr><th>KR</th><th>مبنا</th><th>هدف</th>{d.review_labels.map((l) => <th key={l}>{l}</th>)}<th>آخرین</th></tr></thead>
+          <thead><tr><th>نتیجهٔ کلیدی</th><th>مبنا</th><th>هدف</th>{d.review_labels.map((l) => <th key={l}>{tpLabel(l)}</th>)}<th>آخرین</th></tr></thead>
           <tbody>
             {objs.map((o) => (
               <FragmentRows key={o.id} title={`${fa(o.number)}. ${o.title}`} archived={o.archived} reason={o.archive_reason} cols={d.review_labels.length + 4}>
@@ -167,21 +168,20 @@ export default function Dossier() {
   const u = d.unit;
   const sel = d.cycles.find((c) => c.id === d.cycle?.id);
   const pick = (id: string) => setParams(id === d.cycles[0]?.id ? {} : { cycle: id });
-  const tableLink = `/unit/${u.id}${sel && sel.status !== "active" ? `?cycle=${sel.id}` : ""}`;
   return (
     <>
-      <Crumb items={["سازمان", "پروندهٔ واحدها", u.name]} />
+      <Crumb items={["واحدها", u.name, "پرونده و تاریخچه"]} />
       <div className="mh">
         <div>
           <h1>{u.name}{u.archived && <span className="faint"> (آرشیو)</span>}</h1>
           <p className="faint">{[u.path.length ? `زیرمجموعهٔ ${u.path.join(" › ")}` : "ریشهٔ سازمان", u.type, u.manager_name && `مدیر: ${u.manager_name}`, u.code].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="pickers">
-          <Link className="btn o" to="/units">واحد دیگر</Link>
-          {sel && <Link className="btn o" to={tableLink}>جدول واحد</Link>}
           {sel && <ExportButton path={`/units/${u.id}/export.xlsx?cycle_id=${sel.id}`} label="خروجی Excel" />}
         </div>
       </div>
+
+      <UnitTabs unitId={u.id} active="history" cycleId={sel && sel.status !== "active" ? sel.id : null} />
 
       <section className="dos-sec">
         <h2>اعضا <span className="num faint">{fa(d.members.length)}</span></h2>
@@ -198,7 +198,7 @@ export default function Dossier() {
         <>
           <section className="dos-sec">
             <h2>نتایج کلیدی · {sel.name} {sel.status !== "active" && <span className="lvl">بسته · فقط‌خواندنی</span>}</h2>
-            <p className="faint tiny">مقدار هر KR در هر پایش و درصد پیشرفتش. پایش‌های برگزارشده همان درصدی را نشان می‌دهند که در جلسه ثبت شد.</p>
+            <p className="faint tiny">مقدار هر نتیجهٔ کلیدی در هر پایش و درصد پیشرفتش. پایش‌های برگزارشده همان درصدی را نشان می‌دهند که در جلسه ثبت شد.</p>
             <Matrix d={d} />
           </section>
 
@@ -210,7 +210,7 @@ export default function Dossier() {
                 <tbody>
                   {sel.rounds.map((r) => (
                     <tr key={r.session_id}>
-                      <td><Link to={`/sessions/${r.session_id}`}><b>{r.label}</b></Link></td>
+                      <td><Link to={`/sessions/${r.session_id}`}><b>{tpLabel(r.label)}</b></Link></td>
                       <td>{r.status === "held" ? jDateTime(r.held_at) : r.scheduled_at ? jDateTime(r.scheduled_at) : <span className="risk">تعیین نشده</span>}{r.place && <div className="faint tiny">{r.place}</div>}</td>
                       <td><span className={`badge ${r.status === "held" ? "ok" : r.status === "scheduled" ? "ac" : "none"}`}>{ROUND_STATUS[r.status]}</span></td>
                       <td className="num">{r.total ? `${fa(r.recorded)} از ${fa(r.total)}` : "—"}</td>

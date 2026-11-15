@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { useGet } from "../../api/typed";
 import type { CycleAdmin, SessionHead } from "../../api/types";
-import { fa, jDate } from "../../domain/format";
+import { fa, jDate, tpLabel } from "../../domain/format";
 import { parseJalaliDate, parseJalaliDateTime, toJalaliFields } from "../../domain/jalali";
 import JalaliDate from "../../ui/JalaliDate";
 import { Empty, ErrorBox, Skeleton } from "../../ui/parts";
@@ -33,8 +33,8 @@ function NewCycleForm({ onDone }: { onDone: () => void }) {
   };
   return (
     <>
-      <h3>چرخهٔ جدید</h3>
-      <Field label="نام چرخه" value={name} onChange={setName} placeholder="مثلاً: چرخهٔ بهار ۱۴۰۵" />
+      <h3>دورهٔ جدید</h3>
+      <Field label="نام دوره" value={name} onChange={setName} placeholder="مثلاً: دورهٔ بهار ۱۴۰۵" />
       <div className="two">
         <div className="f"><label htmlFor="cy-from">شروع</label><JalaliDate id="cy-from" label="تاریخ شروع" value={from} onChange={setFrom} placeholder="1405/01/01" /></div>
         <div className="f"><label htmlFor="cy-to">پایان</label><JalaliDate id="cy-to" label="تاریخ پایان" value={to} onChange={setTo} placeholder="1405/04/31" /></div>
@@ -47,9 +47,9 @@ function NewCycleForm({ onDone }: { onDone: () => void }) {
           <span className="faint tiny" style={{ alignSelf: "center" }}>{KIND_LABEL[p.kind]}</span>
         </div>
       ))}
-      <div className="note">برای هر واحد، برای هر نقطهٔ زمانی یک جلسه ساخته می‌شود؛ زمان و مکانش را بعد از ساخت چرخه در همین صفحه می‌گذارید.</div>
+      <div className="note">برای هر واحد، برای هر نقطهٔ زمانی یک جلسه ساخته می‌شود؛ زمان و مکانش را بعد از ساخت دوره در همین صفحه می‌گذارید.</div>
       <Msg err={a.err} />
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}><button className="btn" disabled={a.busy || !name.trim()} onClick={submit}>ساخت چرخه</button><button className="btn o" onClick={onDone}>انصراف</button></div>
+      <div style={{ display: "flex", gap: 8, marginTop: 12 }}><button className="btn" disabled={a.busy || !name.trim()} onClick={submit}>ساخت دوره</button><button className="btn o" onClick={onDone}>انصراف</button></div>
     </>
   );
 }
@@ -65,11 +65,11 @@ function CycleCard({ c, onChange }: { c: CycleAdmin; onChange: () => void }) {
         <div style={{ flex: 1 }}><b style={{ fontSize: 15 }}>{c.name}</b> <span className="lvl">{STATUS_LABEL[c.status] ?? c.status}</span>
           <div className="faint tiny">{jDate(c.starts_on)} تا {jDate(c.ends_on)}، {fa(c.sessions_total)} جلسه، {fa(c.sessions_held)} برگزارشده، {fa(c.sessions_unscheduled)} بدون زمان</div></div>
         {c.status === "draft" && <button className="btn" disabled={a.busy} onClick={() => setStatus("active")}>فعال‌سازی</button>}
-        {c.status === "active" && <button className="btn o" disabled={a.busy} onClick={() => window.confirm("چرخه بسته شود؟ دوباره باز نمی‌شود.") && setStatus("closed")}>بستن چرخه</button>}
+        {c.status === "active" && <button className="btn o" disabled={a.busy} onClick={() => window.confirm("دوره بسته شود؟ دوباره باز نمی‌شود.") && setStatus("closed")}>بستن دوره</button>}
       </div>
       <div className="steps" style={{ margin: "12px 0 0" }}>
         {c.time_points.map((t) => (
-          <span key={t.id} title={KIND_LABEL[t.kind]}>{t.label}
+          <span key={t.id} title={KIND_LABEL[t.kind]}>{tpLabel(t.label)}
             {c.status !== "closed" && <button aria-label={`حذف ${t.label}`} className="lnk" style={{ marginInlineStart: 6, textDecoration: "none" }}
               onClick={() => window.confirm(`نقطهٔ «${t.label}» و جلسه‌هایش حذف شود؟`) && a.run(() => api(`/admin/time-points/${t.id}`, { method: "DELETE" })).then((ok) => ok && onChange())}>×</button>}
           </span>
@@ -130,7 +130,7 @@ function Schedule({ cycle }: { cycle: CycleAdmin }) {
         {cycle.time_points.map((t) => (
           <button key={t.id} role="tab" aria-selected={t.id === tp} className={t.id === tp ? "on" : ""} onClick={() => setTp(t.id)}>{t.label}</button>))}
       </div>
-      {missing > 0 && <div className="warnbar" role="status"><b>{fa(missing)} واحد بدون زمان جلسه.</b> تا زمان‌بندی نشود، ثبت مقدار برای آن واحد باز نمی‌شود.</div>}
+      {missing > 0 && <div className="warnbar" role="status"><b>{fa(missing)} واحد بدون زمان جلسه.</b> ثبت مقدار برایشان باز است، ولی اعضا نمی‌دانند تا کی وقت دارند.</div>}
       {(rows.data ?? []).length === 0 && !rows.loading && <Empty title="جلسه‌ای نیست" hint="ابتدا واحد تعریف کنید؛ جلسه‌ها خودکار ساخته می‌شوند." />}
       {(rows.data ?? []).length > 0 && <div className="mrow head"><span>واحد</span><span>تاریخ (جلالی)</span><span>ساعت</span><span>مکان یا لینک</span><span>وضعیت</span></div>}
       {rows.loading && !rows.data ? <Skeleton rows={3} /> : (rows.data ?? []).map((s) => <SessionRow key={`${s.id}:${s.version}`} s={s} onSaved={rows.reload} />)}
@@ -149,8 +149,8 @@ export default function CyclePanel() {
   const create = () => peek.open(<NewCycleForm onDone={() => { peek.close(); cycles.reload(); }} />);
   return (
     <>
-      <div className="sec"><h2>چرخه‌ها <span className="num">{fa(list.length)}</span></h2><button className="btn" onClick={create}>+ چرخهٔ جدید</button></div>
-      {list.length === 0 && <Empty title="هنوز چرخه‌ای تعریف نشده است" hint="اول واحدها را تعریف کنید، بعد چرخه بسازید و فعالش کنید." />}
+      <div className="sec"><h2>دوره‌ها <span className="num">{fa(list.length)}</span></h2><button className="btn" onClick={create}>+ دورهٔ جدید</button></div>
+      {list.length === 0 && <Empty title="هنوز دوره‌ای تعریف نشده است" hint="اول واحدها را تعریف کنید، بعد دوره بسازید و فعالش کنید." />}
       {list.map((c) => (
         <div key={c.id} onClick={() => setSel(c.id)} className={current?.id === c.id && list.length > 1 ? "picked" : undefined}>
           <CycleCard c={c} onChange={cycles.reload} />

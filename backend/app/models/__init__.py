@@ -1,4 +1,4 @@
-from app.models.access import Role, RolePermission, RoleScope
+from app.models.access import Role, RolePermission, RoleScope, RoleUnitOverride
 from app.models.audit import AuditEvent
 from app.models.cycle import Cycle, StrategicGoal, TimePoint, UnitSession
 from app.models.okr import (
@@ -34,6 +34,7 @@ __all__ = [
     "Role",
     "RolePermission",
     "RoleScope",
+    "RoleUnitOverride",
     "Setting",
     "StrategicGoal",
     "TimePoint",

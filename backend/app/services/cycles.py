@@ -71,9 +71,9 @@ def add_time_point(db: Session, cycle: Cycle, kind: str, label: str) -> TimePoin
         raise CycleError("برچسب نقطهٔ زمانی خالی است")
     tps = _ordered(db, cycle.id)
     if any(t.label == label for t in tps):
-        raise CycleError("این برچسب در چرخه تکراری است")
+        raise CycleError("این برچسب در دوره تکراری است")
     if kind in ("start", "final") and any(t.kind == kind for t in tps):
-        raise CycleError("هر چرخه فقط یک جلسهٔ شروع و یک جلسهٔ نهایی دارد")
+        raise CycleError("هر دوره فقط یک جلسهٔ شروع و یک جلسهٔ نهایی دارد")
     tp = TimePoint(cycle_id=cycle.id, kind=kind, ordinal=10_000, label=label)
     db.add(tp)
     db.flush()

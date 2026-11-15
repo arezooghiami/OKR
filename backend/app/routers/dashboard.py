@@ -39,7 +39,7 @@ def org_tree(db: Session = Depends(get_db), acc: Access = Depends(access)):
 def overview(db: Session = Depends(get_db), acc: Access = Depends(access)):
     cycle = db.scalars(select(Cycle).where(Cycle.status == "active")).first()
     if not cycle:
-        raise HTTPException(404, "چرخهٔ فعالی وجود ندارد")
+        raise HTTPException(404, "دورهٔ فعالی وجود ندارد")
     tps = db.scalars(select(TimePoint).where(TimePoint.cycle_id == cycle.id).order_by(TimePoint.ordinal)).all()
     visible = acc.visible_units("session")
     unit_ids = {s.unit_id for s in db.scalars(select(UnitSession).join(TimePoint, TimePoint.id == UnitSession.time_point_id)

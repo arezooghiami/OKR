@@ -73,7 +73,7 @@ def world(c):
         return r.json()["id"]
 
     ids = {"mgr_tech": user("mgr_tech", "مدیر واحد", tech), "mgr_fin": user("mgr_fin", "مدیر واحد", fin),
-           "member": user("member", "مسئول KR", tech), "viewer": user("viewer", "ناظر", None)}
+           "member": user("member", "کارشناس واحد", tech), "viewer": user("viewer", "کارشناس سامانه", None)}
     return {"a": a, "root": root, "tech": tech, "fin": fin, "cycle": cyc.json()["id"], "ids": ids, "roles": roles}
 
 
@@ -187,6 +187,14 @@ def test_every_role_end_to_end(c, world):
     assert mine and mine[0]["key_results"][0]["editable"] is True
     ok = c.put(f"{API}/sessions/{r1}/entries/{kr_id}", headers=mem, json={"value": 4})
     assert ok.status_code == 200 and ok.json()["percent"] == 40
+    # a "keep within range" KR carries its bounds so the owner's page can preview the percent while typing
+    rk = c.post(f"{API}/objectives/{o.json()['id']}/key-results", headers=mt, json={
+        "title": "KR بازه", "kind": "maintain", "range_min": 90, "range_max": 100, "owner_id": ids["member"]})
+    assert rk.status_code == 201, rk.text
+    mine_rk = next(k for b in c.get(f"{API}/me/key-results", headers=mem).json() for k in b["key_results"]
+                   if k["id"] == rk.json()["id"])
+    assert (mine_rk["kind"], mine_rk["range_min"], mine_rk["range_max"]) == ("maintain", 90, 100)
+    assert c.post(f"{API}/key-results/{rk.json()['id']}/archive", headers=mt, json={"reason": "فقط برای آزمون"}).status_code == 200
 
     # --- the other unit's manager and the observer
     assert c.get(f"{API}/sessions/{r1}", headers=mf).status_code == 403
@@ -218,7 +226,7 @@ def test_every_role_end_to_end(c, world):
 
 def test_new_role_copy_and_audit_has_no_secrets(c, world):
     a = world["a"]
-    r = c.post(f"{API}/admin/roles", headers=a, json={"name": "هماهنگ‌کننده", "copy_from_id": world["roles"]["ناظر"]})
+    r = c.post(f"{API}/admin/roles", headers=a, json={"name": "هماهنگ‌کننده", "copy_from_id": world["roles"]["کارشناس سامانه"]})
     assert r.status_code == 201 and r.json()["permissions"]["report"]["view"] == "allow"
     assert c.post(f"{API}/admin/roles", headers=a, json={"name": "هماهنگ‌کننده"}).status_code == 409
     log = c.get(f"{API}/admin/audit?limit=500", headers=a).json()
